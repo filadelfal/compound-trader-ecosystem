@@ -12,6 +12,12 @@ __pycache__/
 
 # Local backups and generated reports
 *.backup-*
+*.bak
+*.backup
+*-error.txt
+*-report.txt
+*-discovery.txt
+backups/
 npm-audit-report.json
 
 # Dependencies and builds
