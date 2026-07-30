@@ -48,11 +48,11 @@ describeDatabase("authentication API with PostgreSQL", () => {
     expect(registration.status).toBe(201);
     userId = registration.body.data.userId;
 
-    const firstVerificationToken = await latestEmailToken("Verify your email address");
+    const firstVerificationToken = await latestEmailToken("Verify your Compound Trader email");
     const resend = await request(app).post("/api/v1/auth/resend-verification")
       .send({ email });
     expect(resend.status).toBe(202);
-    const verificationToken = await latestEmailToken("Verify your email address");
+    const verificationToken = await latestEmailToken("Verify your Compound Trader email");
     expect(verificationToken).not.toBe(firstVerificationToken);
 
     const obsoleteVerification = await request(app).post("/api/v1/auth/verify-email")
@@ -102,7 +102,7 @@ describeDatabase("authentication API with PostgreSQL", () => {
     const forgotPassword = await request(app).post("/api/v1/auth/forgot-password")
       .send({ email });
     expect(forgotPassword.status).toBe(202);
-    const resetToken = await latestEmailToken("Reset your password");
+    const resetToken = await latestEmailToken("Reset your Compound Trader password");
     const resetPassword = await request(app).post("/api/v1/auth/reset-password")
       .send({ token: resetToken, newPassword });
     expect(resetPassword.status).toBe(200);
