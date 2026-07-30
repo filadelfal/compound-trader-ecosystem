@@ -69,4 +69,3 @@ export function createPasswordResetRouter(service: PasswordResetService): Router
 
   return router;
 }
-
