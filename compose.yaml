@@ -12,7 +12,7 @@
                                                              "PORT":  "3001",
                                                              "SERVICE_NAME":  "atlas-forge",
                                                              "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
                                                          },
                                          "depends_on":  {
@@ -34,7 +34,7 @@
                                                                  "PORT":  "3002",
                                                                  "SERVICE_NAME":  "user-management",
                                                                  "LOG_LEVEL":  "info",
-                                                                 "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                  "REDIS_URL":  "redis://redis:6379/0",
                                                                  "JWT_ACCESS_SECRET":  "${JWT_ACCESS_SECRET}",
                                                                  "JWT_REFRESH_SECRET":  "${JWT_REFRESH_SECRET}",
@@ -74,7 +74,7 @@
                                                                 "PORT":  "3003",
                                                                 "SERVICE_NAME":  "trading-engine",
                                                                 "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                 "REDIS_URL":  "redis://redis:6379/0"
                                                             },
                                             "depends_on":  {
@@ -101,7 +101,7 @@
                                                              "PORT":  "3004",
                                                              "SERVICE_NAME":  "market-data",
                                                              "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
                                                          },
                                          "depends_on":  {
@@ -125,7 +125,7 @@
                                                             "PORT":  "3005",
                                                             "SERVICE_NAME":  "ai-analyst",
                                                             "LOG_LEVEL":  "info",
-                                                            "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                            "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                             "REDIS_URL":  "redis://redis:6379/0"
                                                         },
                                         "depends_on":  {
@@ -147,7 +147,7 @@
                                                            "PORT":  "3006",
                                                            "SERVICE_NAME":  "ai-mentor",
                                                            "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                            "REDIS_URL":  "redis://redis:6379/0"
                                                        },
                                        "depends_on":  {
@@ -169,7 +169,7 @@
                                                          "PORT":  "3007",
                                                          "SERVICE_NAME":  "ai-risk",
                                                          "LOG_LEVEL":  "info",
-                                                         "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                         "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                          "REDIS_URL":  "redis://redis:6379/0"
                                                      },
                                      "depends_on":  {
@@ -193,7 +193,7 @@
                                                           "PORT":  "3008",
                                                           "SERVICE_NAME":  "ai-coach",
                                                           "LOG_LEVEL":  "info",
-                                                          "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                          "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                           "REDIS_URL":  "redis://redis:6379/0"
                                                       },
                                       "depends_on":  {
@@ -215,7 +215,7 @@
                                                                  "PORT":  "3009",
                                                                  "SERVICE_NAME":  "strategy-engine",
                                                                  "LOG_LEVEL":  "info",
-                                                                 "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                  "REDIS_URL":  "redis://redis:6379/0"
                                                              },
                                              "depends_on":  {
@@ -242,7 +242,7 @@
                                                                  "PORT":  "3010",
                                                                  "SERVICE_NAME":  "backtest-engine",
                                                                  "LOG_LEVEL":  "info",
-                                                                 "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                  "REDIS_URL":  "redis://redis:6379/0"
                                                              },
                                              "depends_on":  {
@@ -266,7 +266,7 @@
                                                                   "PORT":  "3011",
                                                                   "SERVICE_NAME":  "portfolio-engine",
                                                                   "LOG_LEVEL":  "info",
-                                                                  "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                  "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                   "REDIS_URL":  "redis://redis:6379/0"
                                                               },
                                               "depends_on":  {
@@ -293,7 +293,7 @@
                                                                 "PORT":  "3012",
                                                                 "SERVICE_NAME":  "journal-engine",
                                                                 "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                 "REDIS_URL":  "redis://redis:6379/0"
                                                             },
                                             "depends_on":  {
@@ -317,7 +317,7 @@
                                                              "PORT":  "3013",
                                                              "SERVICE_NAME":  "news-engine",
                                                              "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
                                                          },
                                          "depends_on":  {
@@ -341,7 +341,7 @@
                                                               "PORT":  "3014",
                                                               "SERVICE_NAME":  "alert-engine",
                                                               "LOG_LEVEL":  "info",
-                                                              "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                              "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                               "REDIS_URL":  "redis://redis:6379/0"
                                                           },
                                           "depends_on":  {
@@ -368,7 +368,7 @@
                                                                   "PORT":  "3015",
                                                                   "SERVICE_NAME":  "analytics-engine",
                                                                   "LOG_LEVEL":  "info",
-                                                                  "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                  "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                   "REDIS_URL":  "redis://redis:6379/0"
                                                               },
                                               "depends_on":  {
@@ -395,7 +395,7 @@
                                                                "PORT":  "3016",
                                                                "SERVICE_NAME":  "propfirm-mode",
                                                                "LOG_LEVEL":  "info",
-                                                               "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                               "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                "REDIS_URL":  "redis://redis:6379/0"
                                                            },
                                            "depends_on":  {
@@ -419,7 +419,7 @@
                                                              "PORT":  "3017",
                                                              "SERVICE_NAME":  "marketplace",
                                                              "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
                                                          },
                                          "depends_on":  {
@@ -446,7 +446,7 @@
                                                            "PORT":  "3018",
                                                            "SERVICE_NAME":  "education",
                                                            "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                            "REDIS_URL":  "redis://redis:6379/0"
                                                        },
                                        "depends_on":  {
@@ -473,7 +473,7 @@
                                                            "PORT":  "3019",
                                                            "SERVICE_NAME":  "community",
                                                            "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                            "REDIS_URL":  "redis://redis:6379/0"
                                                        },
                                        "depends_on":  {
@@ -500,7 +500,7 @@
                                                              "PORT":  "3020",
                                                              "SERVICE_NAME":  "admin-panel",
                                                              "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
                                                          },
                                          "depends_on":  {
@@ -524,7 +524,7 @@
                                                                 "PORT":  "3021",
                                                                 "SERVICE_NAME":  "security-audit",
                                                                 "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                 "REDIS_URL":  "redis://redis:6379/0"
                                                             },
                                             "depends_on":  {
@@ -548,7 +548,7 @@
                                                              "PORT":  "3022",
                                                              "SERVICE_NAME":  "api-gateway",
                                                              "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
                                                          },
                                          "depends_on":  {
@@ -572,7 +572,7 @@
                                                                 "PORT":  "3023",
                                                                 "SERVICE_NAME":  "mobile-backend",
                                                                 "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                 "REDIS_URL":  "redis://redis:6379/0"
                                                             },
                                             "depends_on":  {
@@ -599,7 +599,7 @@
                                                              "PORT":  "3024",
                                                              "SERVICE_NAME":  "cloud-infra",
                                                              "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
                                                          },
                                          "depends_on":  {
@@ -621,7 +621,7 @@
                                                            "PORT":  "3025",
                                                            "SERVICE_NAME":  "future-ai",
                                                            "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:compound_dev_password@postgres:5432/compound",
+                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                            "REDIS_URL":  "redis://redis:6379/0"
                                                        },
                                        "depends_on":  {
@@ -636,7 +636,7 @@
                                       "image":  "postgres:16-alpine",
                                       "environment":  {
                                                           "POSTGRES_USER":  "compound",
-                                                          "POSTGRES_PASSWORD":  "compound_dev_password",
+                                                          "POSTGRES_PASSWORD":  "${POSTGRES_PASSWORD:-compound_dev_password}",
                                                           "POSTGRES_DB":  "compound"
                                                       },
                                       "ports":  [
