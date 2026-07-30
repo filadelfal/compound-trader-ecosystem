@@ -13,8 +13,10 @@
   failure logging, and a development-only fallback.
 - Transactional PostgreSQL email outbox with concurrent-safe claiming,
   asynchronous delivery, bounded retries, and exponential backoff.
-- PostgreSQL-backed end-to-end API coverage for registration, verification,
-  login, authenticated profile access, and refresh-token rotation.
+- PostgreSQL-backed end-to-end API coverage for registration, verification
+  resend and invalidation, login, profile read/update, refresh rotation,
+  logout, logout-all, password recovery, account lockout, login-attempt
+  persistence, and authentication audit events.
 - PostgreSQL concurrency coverage proving that only one competing refresh
   rotation succeeds and the replayed session and replacement token are revoked.
 
@@ -42,9 +44,10 @@ provider payload contract in staging.
 
 ## Remaining release blockers
 
-1. Run the CI PostgreSQL job and retain successful evidence.
-2. Exercise all authentication routes against PostgreSQL in staging and retain
-   the test and audit-event evidence.
+1. Push `codex/production-completion`, run the CI PostgreSQL job, and retain the
+   successful workflow URL and commit SHA as evidence.
+2. Repeat the complete authentication API suite in staging with the selected
+   email provider and retain the test, outbox, login-attempt, and audit evidence.
 3. Validate sender-domain DNS, bounce/suppression handling, and delivery alerts.
 4. Run Docker/Helm/Kubernetes, load, backup-restore, rollback, and failure tests.
 5. Supply real infrastructure, production secrets, TLS/DNS, monitoring, and
@@ -52,6 +55,36 @@ provider payload contract in staging.
 
 The service is not a public production release until these blockers have
 objective test evidence.
+
+## Release-candidate verification matrix
+
+| Control | Repository evidence | External evidence still required |
+|---|---|---|
+| Authentication routes | Unit/API tests plus PostgreSQL end-to-end suite | Successful CI and staging run |
+| Session security | Atomic rotation, replay and concurrent-race tests | Successful CI PostgreSQL run |
+| Database changes | Ordered SQL migrations and migration command | Staging migration and rollback exercise |
+| Email reliability | Transactional outbox, worker, retry and alerts | Verified provider, sender DNS and webhooks |
+| API security | Validation, Helmet, request IDs, rate limits and RBAC | Ingress/TLS and security review |
+| Supply chain | Locked dependencies; production audit has zero findings | Container-image scan and signed release |
+| Operations | Health, readiness, metrics, alerts and operations guide | Load, failure, backup/restore and rollback evidence |
+
+## Handoff commands
+
+Run from `services/user-management` with an isolated PostgreSQL database:
+
+```bash
+npm ci
+npm run lint
+npm run build
+npm test
+npm run migrate
+npm run test:integration
+npm audit --omit=dev --audit-level=high
+```
+
+Required environment variables are documented in `.env.example`. Never point
+`TEST_DATABASE_URL` at a shared, staging, or production database because the
+integration suite creates and deletes test records.
 # Release readiness
 
 ## Email outbox monitoring
