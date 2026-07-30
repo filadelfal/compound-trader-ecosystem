@@ -15,6 +15,8 @@ import { SessionService } from "./auth/session/session.service";
 import { createSessionRouter } from "./auth/session/session.routes";
 import { createPasswordResetRouter } from "./auth/password-reset/password-reset.routes";
 import { PasswordResetService } from "./auth/password-reset/password-reset.service";
+import { createUserRouter } from "./users/user.routes";
+import { UserService } from "./users/user.service";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -27,6 +29,7 @@ app.use(
     new RegistrationService(pool, passwordService, emailSender),
   ),
 );
+app.use("/api/v1/users", createUserRouter(new UserService(pool)));
 const sessionService = new SessionService(new PostgresSessionRepository(pool));
 app.use(
   "/api/v1/auth",
