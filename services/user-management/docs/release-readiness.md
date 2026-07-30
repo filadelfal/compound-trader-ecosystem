@@ -11,6 +11,10 @@
   audit, Docker, Kubernetes, Helm, and operations guidance.
 - Configurable HTTPS email provider with timeout, transient retries, redacted
   failure logging, and a development-only fallback.
+- Transactional PostgreSQL email outbox with concurrent-safe claiming,
+  asynchronous delivery, bounded retries, and exponential backoff.
+- PostgreSQL-backed end-to-end API coverage for registration, verification,
+  login, authenticated profile access, and refresh-token rotation.
 
 ## Production email configuration
 
@@ -23,6 +27,10 @@ EMAIL_API_URL=https://your-provider.example/v1/send
 EMAIL_API_KEY=<secret>
 EMAIL_TIMEOUT_MS=5000
 EMAIL_MAX_ATTEMPTS=3
+EMAIL_OUTBOX_POLL_MS=1000
+EMAIL_OUTBOX_BATCH_SIZE=20
+EMAIL_OUTBOX_MAX_ATTEMPTS=8
+EMAIL_OUTBOX_RETRY_BASE_SECONDS=30
 WEB_APP_URL=https://app.your-domain.example
 ```
 
@@ -32,14 +40,12 @@ provider payload contract in staging.
 
 ## Remaining release blockers
 
-1. Add a transactional email outbox and worker so messages survive provider
-   outages after a database transaction commits.
-2. Run the CI PostgreSQL job and retain successful evidence.
-3. Exercise all authentication routes against PostgreSQL in staging, including
+1. Run the CI PostgreSQL job and retain successful evidence.
+2. Exercise all authentication routes against PostgreSQL in staging, including
    concurrent refresh rotation and replay.
-4. Validate sender-domain DNS, bounce/suppression handling, and delivery alerts.
-5. Run Docker/Helm/Kubernetes, load, backup-restore, rollback, and failure tests.
-6. Supply real infrastructure, production secrets, TLS/DNS, monitoring, and
+3. Validate sender-domain DNS, bounce/suppression handling, and delivery alerts.
+4. Run Docker/Helm/Kubernetes, load, backup-restore, rollback, and failure tests.
+5. Supply real infrastructure, production secrets, TLS/DNS, monitoring, and
    security approval.
 
 The service is not a public production release until these blockers have

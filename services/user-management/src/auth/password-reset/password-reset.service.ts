@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { Pool } from "pg";
 
 import { config } from "../../config";
-import type { EmailSender } from "../email/email.service";
+import type { EmailQueue } from "../email/email.outbox";
 import { passwordResetEmail } from "../email/email.templates";
 import { PasswordPolicyError, PasswordService } from "../password/password.service";
 
@@ -16,14 +16,13 @@ export class PasswordResetService {
   public constructor(
     private readonly database: Pool,
     private readonly passwords: PasswordService,
-    private readonly emails: EmailSender,
+    private readonly emails: EmailQueue,
   ) {}
 
   public async requestReset(emailInput: string, requestedIp?: string): Promise<void> {
     const email = emailInput.trim().toLowerCase();
     const rawToken = randomBytes(32).toString("base64url");
     const client = await this.database.connect();
-    let recipient: string | null = null;
 
     try {
       await client.query("BEGIN");
@@ -60,7 +59,10 @@ export class PasswordResetService {
            VALUES ($1, 'auth.password_reset.requested', 'user', $1, $2)`,
           [user.id, requestedIp || null],
         );
-        recipient = user.email;
+        await this.emails.enqueue(client, {
+          to: user.email,
+          ...passwordResetEmail(rawToken, config.WEB_APP_URL),
+        });
       }
       await client.query("COMMIT");
     } catch (error) {
@@ -68,13 +70,6 @@ export class PasswordResetService {
       throw error;
     } finally {
       client.release();
-    }
-
-    if (recipient) {
-      await this.emails.send({
-        to: recipient,
-        ...passwordResetEmail(rawToken, config.WEB_APP_URL),
-      });
     }
   }
 

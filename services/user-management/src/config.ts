@@ -110,6 +110,10 @@ const schema = z.object({
   EMAIL_API_KEY: z.string().min(16).optional(),
   EMAIL_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30000).default(5000),
   EMAIL_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(3),
+  EMAIL_OUTBOX_POLL_MS: z.coerce.number().int().min(250).max(60000).default(1000),
+  EMAIL_OUTBOX_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(20),
+  EMAIL_OUTBOX_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(8),
+  EMAIL_OUTBOX_RETRY_BASE_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
   WEB_APP_URL: z.string().url().default("http://localhost:3000"),
 }).superRefine((value, context) => {
   if (value.EMAIL_PROVIDER === "http") {

@@ -6,6 +6,7 @@ import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
 import { pool } from "./db";
 import { createEmailSender } from "./auth/email/email.service";
+import { EmailOutboxWorker, PostgresEmailQueue } from "./auth/email/email.outbox";
 import { passwordService } from "./auth/password/password.service";
 import { createRegistrationRouter } from "./auth/registration/registration.routes";
 import { RegistrationService } from "./auth/registration/registration.service";
@@ -36,6 +37,13 @@ const emailSender = createEmailSender({
   timeoutMs: config.EMAIL_TIMEOUT_MS,
   maxAttempts: config.EMAIL_MAX_ATTEMPTS,
 });
+const emailQueue = new PostgresEmailQueue();
+export const emailOutboxWorker = new EmailOutboxWorker(pool, emailSender, {
+  pollIntervalMs: config.EMAIL_OUTBOX_POLL_MS,
+  batchSize: config.EMAIL_OUTBOX_BATCH_SIZE,
+  maxAttempts: config.EMAIL_OUTBOX_MAX_ATTEMPTS,
+  retryBaseSeconds: config.EMAIL_OUTBOX_RETRY_BASE_SECONDS,
+});
 
 export const app = express();
 app.disable("x-powered-by");
@@ -47,7 +55,7 @@ app.use("/api/v1/auth", authenticationRateLimit);
 app.use(
   "/api/v1/auth",
   createRegistrationRouter(
-    new RegistrationService(pool, passwordService, emailSender),
+    new RegistrationService(pool, passwordService, emailQueue),
   ),
 );
 app.use("/api/v1/users", createUserRouter(new UserService(pool)));
@@ -91,7 +99,7 @@ app.use(
 app.use(
   "/api/v1/auth",
   createPasswordResetRouter(
-    new PasswordResetService(pool, passwordService, emailSender),
+    new PasswordResetService(pool, passwordService, emailQueue),
   ),
 );
 

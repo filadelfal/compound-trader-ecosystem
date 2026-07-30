@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 
 import { config } from "../../config";
-import type { EmailSender } from "../email/email.service";
+import type { EmailQueue } from "../email/email.outbox";
 import { verificationEmail } from "../email/email.templates";
 import { PasswordPolicyError, PasswordService } from "../password/password.service";
 
@@ -23,7 +23,7 @@ export class RegistrationService {
   public constructor(
     private readonly database: Pool,
     private readonly passwords: PasswordService,
-    private readonly emails: EmailSender,
+    private readonly emails: EmailQueue,
   ) {}
 
   public async register(input: RegistrationInput): Promise<{ userId: string }> {
@@ -52,12 +52,11 @@ export class RegistrationService {
          VALUES ($1, 'auth.registration.created', 'user', $1)`,
         [userId],
       );
-      await client.query("COMMIT");
-
-      await this.emails.send({
+      await this.emails.enqueue(client, {
         to: email,
         ...verificationEmail(rawToken, config.WEB_APP_URL),
       });
+      await client.query("COMMIT");
       return { userId };
     } catch (error) {
       await client.query("ROLLBACK");
@@ -114,7 +113,6 @@ export class RegistrationService {
     const email = emailInput.trim().toLowerCase();
     const rawToken = randomBytes(32).toString("base64url");
     const client = await this.database.connect();
-    let recipient: string | null = null;
 
     try {
       await client.query("BEGIN");
@@ -138,7 +136,10 @@ export class RegistrationService {
            VALUES ($1, 'auth.email.verification_resent', 'user', $1)`,
           [user.id],
         );
-        recipient = user.email;
+        await this.emails.enqueue(client, {
+          to: user.email,
+          ...verificationEmail(rawToken, config.WEB_APP_URL),
+        });
       }
       await client.query("COMMIT");
     } catch (error) {
@@ -146,13 +147,6 @@ export class RegistrationService {
       throw error;
     } finally {
       client.release();
-    }
-
-    if (recipient) {
-      await this.emails.send({
-        to: recipient,
-        ...verificationEmail(rawToken, config.WEB_APP_URL),
-      });
     }
   }
 
