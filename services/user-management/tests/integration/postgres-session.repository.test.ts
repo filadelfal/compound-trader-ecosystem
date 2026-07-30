@@ -411,7 +411,7 @@ describeDatabase(
         ).toEqual(
           expect.arrayContaining([
             "REFRESH_TOKEN_ROTATED",
-            "REFRESH_TOKEN_REUSE_DETECTED",
+            "REFRESH_TOKEN_REPLAY",
           ]),
         );
       },
