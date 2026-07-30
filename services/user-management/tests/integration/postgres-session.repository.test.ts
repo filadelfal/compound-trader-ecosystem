@@ -296,6 +296,128 @@ describeDatabase(
     );
 
     it(
+      "allows only one concurrent rotation and compromises the replayed session",
+      async () => {
+        const userId = randomUUID();
+        const record =
+          createSessionRecord(userId);
+
+        await repository.createSession(
+          record.session,
+          record.token,
+        );
+
+        const createReplacement =
+          (): StoredRefreshToken => ({
+            ...record.token,
+            id: randomUUID(),
+            tokenHash:
+              createUniqueTokenHash(),
+            createdAt: new Date(),
+          });
+
+        const firstReplacement =
+          createReplacement();
+        const secondReplacement =
+          createReplacement();
+        const activityAt = new Date();
+
+        const results = await Promise.all([
+          repository
+            .rotateRefreshTokenAtomically({
+              sessionId:
+                record.session.id,
+              userId,
+              currentTokenId:
+                record.token.id,
+              currentTokenHash:
+                record.token.tokenHash,
+              replacementToken:
+                firstReplacement,
+              activityAt,
+            }),
+          repository
+            .rotateRefreshTokenAtomically({
+              sessionId:
+                record.session.id,
+              userId,
+              currentTokenId:
+                record.token.id,
+              currentTokenHash:
+                record.token.tokenHash,
+              replacementToken:
+                secondReplacement,
+              activityAt,
+            }),
+        ]);
+
+        expect(results.sort()).toEqual([
+          "rotated",
+          "token_reused",
+        ]);
+
+        const session =
+          await repository.findSessionById(
+            record.session.id,
+          );
+
+        expect(session?.status).toBe(
+          "compromised",
+        );
+
+        const activeSessions =
+          await repository.listActiveSessions(
+            userId,
+            new Date(),
+          );
+
+        expect(activeSessions).toHaveLength(0);
+
+        const replacements =
+          await database.query<{
+            id: string;
+            status: string;
+          }>(
+            `SELECT id, status
+             FROM refresh_tokens
+             WHERE id = ANY($1::uuid[])`,
+            [[
+              firstReplacement.id,
+              secondReplacement.id,
+            ]],
+          );
+
+        expect(replacements.rows).toHaveLength(
+          1,
+        );
+        expect(
+          replacements.rows[0]?.status,
+        ).toBe("revoked");
+
+        const replayEvents =
+          await database.query<{
+            event_type: string;
+          }>(
+            `SELECT event_type
+             FROM authentication_security_events
+             WHERE session_id = $1`,
+            [record.session.id],
+          );
+
+        expect(
+          replayEvents.rows.map(
+            (event) => event.event_type,
+          ),
+        ).toEqual(
+          expect.arrayContaining([
+            "REFRESH_TOKEN_ROTATED",
+            "REFRESH_TOKEN_REPLAY",
+          ]),
+        );
+      },
+    );
+
+    it(
       "revokes all active user sessions",
       async () => {
         const userId = randomUUID();

@@ -1,6 +1,0 @@
-apiVersion: v2
-name: user-management
-description: Helm chart for user-management
-type: application
-version: 1.0.0
-appVersion: "1.0.0"

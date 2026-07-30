@@ -46,7 +46,16 @@ transaction:
 `SELECT ... FOR UPDATE` must be used to prevent two concurrent refresh
 requests from both succeeding.
 
-## Next integration step
+## Integration status
 
-Implement `PostgresSessionRepository` against the user-management
-service's existing PostgreSQL client and migration runner.
+`PostgresSessionRepository` is implemented against the service PostgreSQL
+client. HTTP routes now use it for login, atomic refresh rotation, current
+session logout, and logout from all devices. Its database behavior is covered
+by the opt-in PostgreSQL integration suite.
+
+Run that suite only against an isolated disposable database:
+
+```bash
+TEST_DATABASE_URL=postgresql://user:password@localhost:5432/compound_test \
+  npm run test:integration
+```

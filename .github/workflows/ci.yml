@@ -4,9 +4,61 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
+  user-management:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: compound_test
+          POSTGRES_PASSWORD: compound_test_password
+          POSTGRES_DB: compound_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U compound_test -d compound_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: services/user-management
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://compound_test:compound_test_password@localhost:5432/compound_test
+      TEST_DATABASE_URL: postgresql://compound_test:compound_test_password@localhost:5432/compound_test
+      JWT_ACCESS_SECRET: ci-access-secret-0123456789abcdef-ci-access-secret-0123456789abcdef
+      JWT_REFRESH_SECRET: ci-refresh-secret-0123456789abcdef-ci-refresh-secret-0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: services/user-management/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Run unit and API tests
+        run: npm test
+      - name: Apply database migrations
+        run: npm run migrate
+      - name: Run PostgreSQL integration tests
+        run: npm run test:integration
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
   validate-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Validate Docker Compose

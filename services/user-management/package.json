@@ -6,10 +6,10 @@
         "build": "tsc",
         "start": "node dist/main.js",
         "dev": "tsx watch src/main.ts",
-        "test": "dotenv -e .env.test -- jest --runInBand --config jest.config.cjs",
+        "test": "jest --runInBand --config jest.config.cjs",
         "lint": "tsc --noEmit",
         "migrate": "tsx scripts/migrate.ts",
-        "test:integration": "dotenv -e .env.test -- jest --runInBand --config jest.config.cjs tests/integration"
+        "test:integration": "jest --runInBand --config jest.config.cjs tests/integration"
     },
     "dependencies": {
         "argon2": "^0.45.1",
@@ -25,13 +25,12 @@
     },
     "devDependencies": {
         "@types/express": "^5.0.0",
-        "@types/jest": "^29.5.14",
+        "@types/jest": "^30.0.0",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^22.10.2",
         "@types/pg": "^8.11.10",
         "@types/supertest": "^6.0.3",
-        "dotenv-cli": "^11.0.0",
-        "jest": "^29.7.0",
+        "jest": "^30.4.2",
         "supertest": "^7.2.2",
         "ts-jest": "^29.4.12",
         "tsx": "^4.19.2",
