@@ -13,6 +13,8 @@ import { LoginService } from "./auth/login/login.service";
 import { PostgresSessionRepository } from "./auth/session/postgres-session.repository";
 import { SessionService } from "./auth/session/session.service";
 import { createSessionRouter } from "./auth/session/session.routes";
+import { createPasswordResetRouter } from "./auth/password-reset/password-reset.routes";
+import { PasswordResetService } from "./auth/password-reset/password-reset.service";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -52,6 +54,12 @@ app.use(
       passwordService,
       new SessionService(new PostgresSessionRepository(pool)),
     ),
+  ),
+);
+app.use(
+  "/api/v1/auth",
+  createPasswordResetRouter(
+    new PasswordResetService(pool, passwordService, emailSender),
   ),
 );
 
