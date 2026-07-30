@@ -8,6 +8,10 @@ import { emailSender } from "./auth/email/email.service";
 import { passwordService } from "./auth/password/password.service";
 import { createRegistrationRouter } from "./auth/registration/registration.routes";
 import { RegistrationService } from "./auth/registration/registration.service";
+import { createLoginRouter } from "./auth/login/login.routes";
+import { LoginService } from "./auth/login/login.service";
+import { PostgresSessionRepository } from "./auth/session/postgres-session.repository";
+import { SessionService } from "./auth/session/session.service";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -18,6 +22,16 @@ app.use(
   "/api/v1/auth",
   createRegistrationRouter(
     new RegistrationService(pool, passwordService, emailSender),
+  ),
+);
+app.use(
+  "/api/v1/auth",
+  createLoginRouter(
+    new LoginService(
+      pool,
+      passwordService,
+      new SessionService(new PostgresSessionRepository(pool)),
+    ),
   ),
 );
 

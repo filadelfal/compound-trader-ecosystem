@@ -10,6 +10,7 @@ import {
 function testApp(service: {
   register: jest.Mock;
   verifyEmail: jest.Mock;
+  resendVerification: jest.Mock;
 }) {
   const app = express();
   app.use(express.json());
@@ -25,6 +26,7 @@ describe("registration routes", () => {
     const service = {
       register: jest.fn().mockResolvedValue({ userId: "user-1" }),
       verifyEmail: jest.fn(),
+      resendVerification: jest.fn(),
     };
     const response = await request(testApp(service))
       .post("/api/v1/auth/register")
@@ -36,7 +38,11 @@ describe("registration routes", () => {
   });
 
   it("rejects invalid registration input", async () => {
-    const service = { register: jest.fn(), verifyEmail: jest.fn() };
+    const service = {
+      register: jest.fn(),
+      verifyEmail: jest.fn(),
+      resendVerification: jest.fn(),
+    };
     const response = await request(testApp(service))
       .post("/api/v1/auth/register")
       .send({ email: "invalid", password: "short" });
@@ -49,6 +55,7 @@ describe("registration routes", () => {
     const service = {
       register: jest.fn().mockRejectedValue(new RegistrationConflictError()),
       verifyEmail: jest.fn(),
+      resendVerification: jest.fn(),
     };
     const response = await request(testApp(service))
       .post("/api/v1/auth/register")
@@ -62,6 +69,7 @@ describe("registration routes", () => {
     const service = {
       register: jest.fn(),
       verifyEmail: jest.fn().mockResolvedValue(undefined),
+      resendVerification: jest.fn(),
     };
     const response = await request(testApp(service))
       .post("/api/v1/auth/verify-email")
@@ -75,6 +83,7 @@ describe("registration routes", () => {
     const service = {
       register: jest.fn(),
       verifyEmail: jest.fn().mockRejectedValue(new VerificationTokenError()),
+      resendVerification: jest.fn(),
     };
     const response = await request(testApp(service))
       .post("/api/v1/auth/verify-email")
@@ -82,5 +91,19 @@ describe("registration routes", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error.code).toBe("invalid_verification_token");
+  });
+
+  it("accepts resend requests without disclosing account existence", async () => {
+    const service = {
+      register: jest.fn(),
+      verifyEmail: jest.fn(),
+      resendVerification: jest.fn().mockResolvedValue(undefined),
+    };
+    const response = await request(testApp(service))
+      .post("/api/v1/auth/resend-verification")
+      .send({ email: "user@example.com" });
+
+    expect(response.status).toBe(202);
+    expect(service.resendVerification).toHaveBeenCalledWith("user@example.com");
   });
 });

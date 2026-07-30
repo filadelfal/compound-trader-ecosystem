@@ -18,6 +18,10 @@ const verificationSchema = z.object({
   token: z.string().min(32).max(512),
 }).strict();
 
+const resendVerificationSchema = z.object({
+  email: z.string().trim().email().max(320),
+}).strict();
+
 export function createRegistrationRouter(service: RegistrationService): Router {
   const router = Router();
 
@@ -60,6 +64,24 @@ export function createRegistrationRouter(service: RegistrationService): Router {
       }
       if (error instanceof VerificationTokenError) {
         response.status(400).json({ error: { code: "invalid_verification_token" } });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  router.post("/resend-verification", async (request, response, next) => {
+    try {
+      const { email } = resendVerificationSchema.parse(request.body);
+      await service.resendVerification(email);
+      response.status(202).json({
+        data: {
+          message: "If the account is eligible, a verification email will be sent.",
+        },
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        response.status(400).json({ error: { code: "validation_error", details: error.flatten() } });
         return;
       }
       next(error);

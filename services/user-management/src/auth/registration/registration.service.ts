@@ -110,6 +110,53 @@ export class RegistrationService {
     }
   }
 
+  public async resendVerification(emailInput: string): Promise<void> {
+    const email = emailInput.trim().toLowerCase();
+    const rawToken = randomBytes(32).toString("base64url");
+    const client = await this.database.connect();
+    let recipient: string | null = null;
+
+    try {
+      await client.query("BEGIN");
+      const result = await client.query<{ id: string; email: string }>(
+        `SELECT id, email FROM compound.users
+         WHERE LOWER(email) = $1 AND email_verified = FALSE
+           AND status = 'pending_verification' AND deleted_at IS NULL
+         FOR UPDATE`,
+        [email],
+      );
+      const user = result.rows[0];
+      if (user) {
+        await client.query(
+          `UPDATE compound.email_verification_tokens SET used_at = NOW()
+           WHERE user_id = $1 AND used_at IS NULL`,
+          [user.id],
+        );
+        await this.createVerificationToken(client, user.id, rawToken);
+        await client.query(
+          `INSERT INTO compound.audit_logs (user_id, event_type, entity_type, entity_id)
+           VALUES ($1, 'auth.email.verification_resent', 'user', $1)`,
+          [user.id],
+        );
+        recipient = user.email;
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    if (recipient) {
+      await this.emails.send({
+        to: recipient,
+        subject: "Verify your Compound Trader account",
+        text: `Verify your account using this token: ${rawToken}`,
+      });
+    }
+  }
+
   private async createVerificationToken(
     client: PoolClient,
     userId: string,
