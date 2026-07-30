@@ -1,12 +1,13 @@
 ﻿const path = require("node:path");
 
 const projectRoot = __dirname;
-const nodeModules = path.resolve(projectRoot, "node_modules");
-
 /** @type {import("jest").Config} */
 module.exports = {
   rootDir: projectRoot,
   testEnvironment: "node",
+  setupFiles: [
+    "<rootDir>/jest.env.cjs",
+  ],
   roots: [
     "<rootDir>/src",
     "<rootDir>/tests",
@@ -26,27 +27,6 @@ module.exports = {
     ],
   },
 
-  moduleNameMapper: {
-
-    "^\\.\\./src/app$": "<rootDir>/src/app.ts",
-
-    "^\\.\\./\\.\\./src/auth/password/password\\.service$": "<rootDir>/src/auth/password/password.service.ts",
-
-    "^\\.\\./\\.\\./src/auth/session/session\\.service$": "<rootDir>/src/auth/session/session.service.ts",
-
-    "^@auth/password$": path.resolve(
-      projectRoot,
-      "src/auth/password/index.ts",
-    ),
-
-    "^supertest$": require.resolve("supertest"),
-  },
-
-  moduleDirectories: [
-    nodeModules,
-    "node_modules",
-  ],
-
   moduleFileExtensions: [
     "ts",
     "tsx",
@@ -64,8 +44,6 @@ module.exports = {
     "!src/main.ts",
   ],
 };
-
-
 
 
 

@@ -6,10 +6,10 @@
         "build": "tsc",
         "start": "node dist/main.js",
         "dev": "tsx watch src/main.ts",
-        "test": "dotenv -e .env.test -- jest --runInBand --config jest.config.cjs",
+        "test": "jest --runInBand --config jest.config.cjs",
         "lint": "tsc --noEmit",
         "migrate": "tsx scripts/migrate.ts",
-        "test:integration": "dotenv -e .env.test -- jest --runInBand --config jest.config.cjs tests/integration"
+        "test:integration": "jest --runInBand --config jest.config.cjs tests/integration"
     },
     "dependencies": {
         "argon2": "^0.45.1",
