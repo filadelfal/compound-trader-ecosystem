@@ -12,6 +12,7 @@ import { createLoginRouter } from "./auth/login/login.routes";
 import { LoginService } from "./auth/login/login.service";
 import { PostgresSessionRepository } from "./auth/session/postgres-session.repository";
 import { SessionService } from "./auth/session/session.service";
+import { createSessionRouter } from "./auth/session/session.routes";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -23,6 +24,25 @@ app.use(
   createRegistrationRouter(
     new RegistrationService(pool, passwordService, emailSender),
   ),
+);
+const sessionService = new SessionService(new PostgresSessionRepository(pool));
+app.use(
+  "/api/v1/auth",
+  createSessionRouter({
+    sessions: sessionService,
+    resolveRoles: async (userId) => {
+      const result = await pool.query<{ name: string }>(
+        `SELECT roles.name
+           FROM compound.roles AS roles
+           JOIN compound.user_roles AS user_roles
+             ON user_roles.role_id = roles.id
+          WHERE user_roles.user_id = $1
+          ORDER BY roles.name`,
+        [userId],
+      );
+      return result.rows.map(({ name }) => name);
+    },
+  }),
 );
 app.use(
   "/api/v1/auth",
