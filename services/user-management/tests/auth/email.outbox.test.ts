@@ -1,5 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 import { EmailOutboxWorker, PostgresEmailQueue } from "../../src/auth/email/email.outbox";
+import { emailOutboxMetrics } from "../../src/auth/email/email.metrics";
 
 describe("email outbox", () => {
   it("enqueues an email using the caller transaction", async () => {
@@ -38,6 +39,8 @@ describe("email outbox", () => {
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining("status = 'delivered'"), ["outbox-1"],
     );
+    const metrics = await emailOutboxMetrics.delivered.get();
+    expect(metrics.values[0]?.value).toBeGreaterThan(0);
   });
 
   it("reschedules transient failures without storing message contents in errors", async () => {

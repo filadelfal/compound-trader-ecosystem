@@ -2,6 +2,7 @@ import type { Pool, PoolClient } from "pg";
 
 import { logger } from "../../logger";
 import type { EmailMessage, EmailSender } from "./email.service";
+import { emailOutboxMetrics } from "./email.metrics";
 
 export interface EmailQueue {
   enqueue(client: PoolClient, message: EmailMessage): Promise<void>;
@@ -59,13 +60,16 @@ export class EmailOutboxWorker {
   public async processBatch(): Promise<number> {
     if (this.running) return 0;
     this.running = true;
+    const stopTimer = emailOutboxMetrics.batchDuration.startTimer();
     try {
       const records = await this.claimBatch();
+      emailOutboxMetrics.claimed.inc(records.length);
       for (const record of records) {
         await this.deliver(record);
       }
       return records.length;
     } finally {
+      stopTimer();
       this.running = false;
     }
   }
@@ -133,6 +137,7 @@ export class EmailOutboxWorker {
           WHERE id = $1 AND status = 'processing'`,
         [record.id],
       );
+      emailOutboxMetrics.delivered.inc();
     } catch (error) {
       const exhausted = record.attempt_count >= this.options.maxAttempts;
       const delay = this.options.retryBaseSeconds * 2 ** (record.attempt_count - 1);
@@ -152,6 +157,7 @@ export class EmailOutboxWorker {
           error instanceof Error ? error.name : "EmailDeliveryError",
         ],
       );
+      emailOutboxMetrics.failed.inc({ exhausted: String(exhausted) });
       logger.warn({
         event: "outbox_email_delivery_failed",
         outboxId: record.id,

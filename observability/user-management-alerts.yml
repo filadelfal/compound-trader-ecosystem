@@ -1,0 +1,21 @@
+groups:
+  - name: user-management-email
+    rules:
+      - alert: UserManagementEmailOutboxFailures
+        expr: increase(user_management_email_outbox_failed_total[15m]) >= 5
+        for: 10m
+        labels:
+          severity: warning
+          service: user-management
+        annotations:
+          summary: User-management email delivery is repeatedly failing
+          description: Five or more outbox attempts failed within 15 minutes.
+      - alert: UserManagementEmailOutboxExhausted
+        expr: increase(user_management_email_outbox_failed_total{exhausted="true"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: user-management
+        annotations:
+          summary: A user-management email exhausted all delivery attempts
+          description: Inspect the provider and safely replay the failed outbox record.

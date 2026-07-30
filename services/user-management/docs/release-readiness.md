@@ -50,3 +50,15 @@ provider payload contract in staging.
 
 The service is not a public production release until these blockers have
 objective test evidence.
+# Release readiness
+
+## Email outbox monitoring
+
+The service exports claimed, delivered, failed, exhausted, and batch-duration
+metrics from `/metrics`. Load `observability/user-management-alerts.yml` into
+Prometheus and route warning and critical alerts to the on-call channel.
+
+Provider bounce and complaint webhooks remain a release blocker until a real
+provider is selected: webhook signatures and event schemas are provider-specific
+and must not be invented. Before production, implement a suppression table and
+verified webhook adapter for the selected provider, then test replay protection.
