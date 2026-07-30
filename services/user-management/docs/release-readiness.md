@@ -15,6 +15,8 @@
   asynchronous delivery, bounded retries, and exponential backoff.
 - PostgreSQL-backed end-to-end API coverage for registration, verification,
   login, authenticated profile access, and refresh-token rotation.
+- PostgreSQL concurrency coverage proving that only one competing refresh
+  rotation succeeds and the replayed session and replacement token are revoked.
 
 ## Production email configuration
 
@@ -41,8 +43,8 @@ provider payload contract in staging.
 ## Remaining release blockers
 
 1. Run the CI PostgreSQL job and retain successful evidence.
-2. Exercise all authentication routes against PostgreSQL in staging, including
-   concurrent refresh rotation and replay.
+2. Exercise all authentication routes against PostgreSQL in staging and retain
+   the test and audit-event evidence.
 3. Validate sender-domain DNS, bounce/suppression handling, and delivery alerts.
 4. Run Docker/Helm/Kubernetes, load, backup-restore, rollback, and failure tests.
 5. Supply real infrastructure, production secrets, TLS/DNS, monitoring, and
