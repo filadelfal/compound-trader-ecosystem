@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ai-coach
+description: Helm chart for ai-coach
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

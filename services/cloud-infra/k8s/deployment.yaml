@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-infra
+  namespace: compound-trader
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloud-infra
+  template:
+    metadata:
+      labels:
+        app: cloud-infra
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: cloud-infra
+          image: compoundtrader/cloud-infra:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3024
+          env:
+            - name: PORT
+              value: "3024"
+            - name: SERVICE_NAME
+              value: "cloud-infra"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: redis-url
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3024
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3024
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-infra
+  namespace: compound-trader
+spec:
+  selector:
+    app: cloud-infra
+  ports:
+    - name: http
+      port: 3024
+      targetPort: 3024

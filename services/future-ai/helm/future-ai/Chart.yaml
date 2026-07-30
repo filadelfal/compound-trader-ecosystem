@@ -1,0 +1,6 @@
+apiVersion: v2
+name: future-ai
+description: Helm chart for future-ai
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: backtest-engine
+description: Helm chart for backtest-engine
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

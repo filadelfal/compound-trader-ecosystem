@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "future-ai.fullname" . }}
+spec:
+  selector:
+    app.kubernetes.io/name: future-ai
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}

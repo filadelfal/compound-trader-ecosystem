@@ -1,0 +1,28 @@
+.env
+node_modules/
+dist/
+coverage/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.log
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Local backups and generated reports
+*.backup-*
+npm-audit-report.json
+
+# Dependencies and builds
+node_modules/
+dist/
+coverage/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

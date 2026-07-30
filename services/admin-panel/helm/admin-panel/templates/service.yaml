@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "admin-panel.fullname" . }}
+spec:
+  selector:
+    app.kubernetes.io/name: admin-panel
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}

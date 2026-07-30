@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cloud-infra
+description: Helm chart for cloud-infra
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: atlas-forge
+description: Helm chart for atlas-forge
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

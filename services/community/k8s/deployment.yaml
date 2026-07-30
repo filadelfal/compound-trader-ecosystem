@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: community
+  namespace: compound-trader
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: community
+  template:
+    metadata:
+      labels:
+        app: community
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: community
+          image: compoundtrader/community:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3019
+          env:
+            - name: PORT
+              value: "3019"
+            - name: SERVICE_NAME
+              value: "community"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: redis-url
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3019
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3019
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: community
+  namespace: compound-trader
+spec:
+  selector:
+    app: community
+  ports:
+    - name: http
+      port: 3019
+      targetPort: 3019

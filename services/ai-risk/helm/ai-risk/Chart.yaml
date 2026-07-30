@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ai-risk
+description: Helm chart for ai-risk
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

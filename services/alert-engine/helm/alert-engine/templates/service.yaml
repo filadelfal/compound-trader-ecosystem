@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "alert-engine.fullname" . }}
+spec:
+  selector:
+    app.kubernetes.io/name: alert-engine
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}

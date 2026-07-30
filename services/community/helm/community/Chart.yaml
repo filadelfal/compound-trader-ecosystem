@@ -1,0 +1,6 @@
+apiVersion: v2
+name: community
+description: Helm chart for community
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

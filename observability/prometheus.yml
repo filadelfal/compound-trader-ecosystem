@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: compound-trader
+    static_configs:
+      - targets:
+          - atlas-forge:3001
+          - user-management:3002
+          - trading-engine:3003
+          - market-data:3004
+          - ai-analyst:3005
+          - ai-mentor:3006
+          - ai-risk:3007
+          - ai-coach:3008
+          - strategy-engine:3009
+          - backtest-engine:3010
+          - portfolio-engine:3011
+          - journal-engine:3012
+          - news-engine:3013
+          - alert-engine:3014
+          - analytics-engine:3015
+          - propfirm-mode:3016
+          - marketplace:3017
+          - education:3018
+          - community:3019
+          - admin-panel:3020
+          - security-audit:3021
+          - api-gateway:3022
+          - mobile-backend:3023
+          - cloud-infra:3024
+          - future-ai:3025
