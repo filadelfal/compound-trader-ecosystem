@@ -1,4 +1,5 @@
 import express from "express";
+import helmet from "helmet";
 import client from "prom-client";
 import { config } from "./config";
 import { checkDatabase } from "./db";
@@ -17,12 +18,24 @@ import { createPasswordResetRouter } from "./auth/password-reset/password-reset.
 import { PasswordResetService } from "./auth/password-reset/password-reset.service";
 import { createUserRouter } from "./users/user.routes";
 import { UserService } from "./users/user.service";
+import { errorHandler, notFoundHandler } from "./http/error.middleware";
+import { requestContext } from "./http/request-context.middleware";
+import {
+  authenticationRateLimit,
+  loginRateLimit,
+  recoveryRateLimit,
+} from "./http/rate-limit.middleware";
+import { openApiDocument } from "./openapi";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
 export const app = express();
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
+app.use(requestContext);
+app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
+app.use("/api/v1/auth", authenticationRateLimit);
 app.use(
   "/api/v1/auth",
   createRegistrationRouter(
@@ -48,6 +61,14 @@ app.use(
       return result.rows.map(({ name }) => name);
     },
   }),
+);
+app.use(
+  "/api/v1/auth/login",
+  loginRateLimit,
+);
+app.use(
+  ["/api/v1/auth/forgot-password", "/api/v1/auth/reset-password"],
+  recoveryRateLimit,
 );
 app.use(
   "/api/v1/auth",
@@ -92,15 +113,9 @@ app.get("/api/v1/ping", (_req, res) => {
   res.status(200).json({ message: "pong", service: config.SERVICE_NAME });
 });
 
-app.use((_req, res) => {
-  res.status(404).json({ error: { code: "not_found" } });
+app.get("/openapi.json", (_req, res) => {
+  res.status(200).json(openApiDocument);
 });
 
-app.use((
-  error: unknown,
-  _req: express.Request,
-  res: express.Response,
-  _next: express.NextFunction,
-) => {
-  res.status(500).json({ error: { code: "internal_error" } });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
