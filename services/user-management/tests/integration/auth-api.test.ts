@@ -127,7 +127,7 @@ describeDatabase("authentication API with PostgreSQL", () => {
     for (let attempt = 1; attempt <= 5; attempt += 1) {
       const failed = await request(app).post("/api/v1/auth/login")
         .send({ email, password: "DefinitelyWrongPassword!" });
-      expect(failed.status).toBe(attempt >= 4 ? 423 : 401);
+      expect(failed.status).toBe(attempt >= 5 ? 423 : 401);
     }
 
     const lockedUser = await database.query<{

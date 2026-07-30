@@ -110,6 +110,21 @@ export class PasswordResetService {
       }
 
       await client.query(
+        `UPDATE user_sessions
+            SET status = 'revoked',
+                revoked_at = COALESCE(revoked_at, NOW()),
+                revocation_reason = 'password_reset'
+          WHERE user_id = $1 AND status = 'active'`,
+        [userId],
+      );
+      await client.query(
+        `UPDATE refresh_tokens
+            SET status = 'revoked',
+                revoked_at = COALESCE(revoked_at, NOW())
+          WHERE user_id = $1 AND status = 'active'`,
+        [userId],
+      );
+      await client.query(
         `UPDATE compound.refresh_tokens
             SET revoked_at = COALESCE(revoked_at, NOW())
           WHERE user_id = $1 AND revoked_at IS NULL`,
