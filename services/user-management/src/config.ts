@@ -102,7 +102,27 @@ const schema = z.object({
     .int()
     .min(1)
     .max(1440)
-    .default(15)
+    .default(15),
+
+  EMAIL_PROVIDER: z.enum(["development", "http"]).default("development"),
+  EMAIL_FROM: z.string().email().default("no-reply@compoundtrader.invalid"),
+  EMAIL_API_URL: z.string().url().optional(),
+  EMAIL_API_KEY: z.string().min(16).optional(),
+  EMAIL_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30000).default(5000),
+  EMAIL_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(3),
+  WEB_APP_URL: z.string().url().default("http://localhost:3000"),
+}).superRefine((value, context) => {
+  if (value.EMAIL_PROVIDER === "http") {
+    if (!value.EMAIL_API_URL) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["EMAIL_API_URL"], message: "EMAIL_API_URL is required for the HTTP email provider" });
+    }
+    if (!value.EMAIL_API_KEY) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["EMAIL_API_KEY"], message: "EMAIL_API_KEY is required for the HTTP email provider" });
+    }
+  }
+  if (value.NODE_ENV === "production" && value.EMAIL_PROVIDER === "development") {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["EMAIL_PROVIDER"], message: "Production must use a real email provider" });
+  }
 });
 
 const parsed = schema.safeParse(process.env);

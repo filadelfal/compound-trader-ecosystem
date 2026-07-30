@@ -3,6 +3,7 @@ import type { Pool, PoolClient } from "pg";
 
 import { config } from "../../config";
 import type { EmailSender } from "../email/email.service";
+import { verificationEmail } from "../email/email.templates";
 import { PasswordPolicyError, PasswordService } from "../password/password.service";
 
 export class RegistrationConflictError extends Error {}
@@ -55,8 +56,7 @@ export class RegistrationService {
 
       await this.emails.send({
         to: email,
-        subject: "Verify your Compound Trader account",
-        text: `Verify your account using this token: ${rawToken}`,
+        ...verificationEmail(rawToken, config.WEB_APP_URL),
       });
       return { userId };
     } catch (error) {
@@ -151,8 +151,7 @@ export class RegistrationService {
     if (recipient) {
       await this.emails.send({
         to: recipient,
-        subject: "Verify your Compound Trader account",
-        text: `Verify your account using this token: ${rawToken}`,
+        ...verificationEmail(rawToken, config.WEB_APP_URL),
       });
     }
   }

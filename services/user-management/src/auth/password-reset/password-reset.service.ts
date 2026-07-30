@@ -73,7 +73,7 @@ export class PasswordResetService {
     if (recipient) {
       await this.emails.send({
         to: recipient,
-        ...passwordResetEmail(rawToken),
+        ...passwordResetEmail(rawToken, config.WEB_APP_URL),
       });
     }
   }
@@ -143,4 +143,3 @@ export class PasswordResetService {
 }
 
 export { PasswordPolicyError };
-

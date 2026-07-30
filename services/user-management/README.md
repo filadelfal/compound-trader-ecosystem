@@ -53,3 +53,6 @@ TEST_DATABASE_URL=postgresql://user:password@localhost:5432/compound_test \
 
 See [operations.md](docs/operations.md) for migrations, deployment checks,
 rollback, and incident procedures.
+
+See [release-readiness.md](docs/release-readiness.md) for production email
+configuration, verified controls, and remaining release blockers.

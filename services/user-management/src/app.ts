@@ -5,7 +5,7 @@ import { config } from "./config";
 import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
 import { pool } from "./db";
-import { emailSender } from "./auth/email/email.service";
+import { createEmailSender } from "./auth/email/email.service";
 import { passwordService } from "./auth/password/password.service";
 import { createRegistrationRouter } from "./auth/registration/registration.routes";
 import { RegistrationService } from "./auth/registration/registration.service";
@@ -28,6 +28,14 @@ import {
 import { openApiDocument } from "./openapi";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
+const emailSender = createEmailSender({
+  provider: config.EMAIL_PROVIDER,
+  apiUrl: config.EMAIL_API_URL,
+  apiKey: config.EMAIL_API_KEY,
+  from: config.EMAIL_FROM,
+  timeoutMs: config.EMAIL_TIMEOUT_MS,
+  maxAttempts: config.EMAIL_MAX_ATTEMPTS,
+});
 
 export const app = express();
 app.disable("x-powered-by");
