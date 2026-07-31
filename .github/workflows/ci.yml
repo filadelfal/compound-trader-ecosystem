@@ -61,7 +61,33 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v4.2.3
       - name: Validate Docker Compose
         run: docker compose -f compose.yaml config
+      - name: Validate staging configuration
+        env:
+          POSTGRES_PASSWORD: ci-staging-postgres-password
+          JWT_ACCESS_SECRET: ci-staging-access-secret-0123456789abcdef
+          JWT_REFRESH_SECRET: ci-staging-refresh-secret-0123456789abcdef
+        run: |
+          docker compose -f compose.yaml -f compose.staging.yaml config --quiet
+          staging_config="$RUNNER_TEMP/staging-compose.yaml"
+          docker compose -f compose.yaml -f compose.staging.yaml config > "$staging_config"
+          if grep -q compound_dev_password "$staging_config"; then
+            echo "Development database password leaked into staging configuration."
+            exit 1
+          fi
+      - name: Lint Helm charts
+        shell: bash
+        run: |
+          chart_count=0
+          while IFS= read -r -d '' chart; do
+            helm lint "$(dirname "$chart")"
+            chart_count=$((chart_count + 1))
+          done < <(find services -name Chart.yaml -print0)
+          test "$chart_count" -eq 25
       - name: Build every service
         run: docker compose -f compose.yaml build
