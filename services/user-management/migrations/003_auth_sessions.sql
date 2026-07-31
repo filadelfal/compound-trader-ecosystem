@@ -1,5 +1,7 @@
 BEGIN;
 
+SET LOCAL search_path TO public;
+
 CREATE TABLE IF NOT EXISTS user_sessions (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,

@@ -4,11 +4,11 @@
     "private": true,
     "scripts": {
         "build": "tsc",
-        "start": "node dist/main.js",
+        "start": "node dist/src/main.js",
         "dev": "tsx watch src/main.ts",
         "test": "jest --runInBand --config jest.config.cjs",
         "lint": "tsc --noEmit",
-        "migrate": "tsx scripts/migrate.ts",
+        "migrate": "node dist/scripts/migrate.js",
         "test:integration": "jest --runInBand --config jest.config.cjs tests/integration"
     },
     "dependencies": {
