@@ -1,7 +1,7 @@
 replicaCount: 2
 image:
   repository: ghcr.io/filadelfal/user-management
-  digest: "sha256:0c89b91113eeaf4bbfb567fd6753f2559c327dc283bbbbae0781225fec707c55"
+  digest: "sha256:5db12fc54302d29314620ad74ed0f64402d01a7eaec69176eefb8e3547fdb5c0"
   pullPolicy: IfNotPresent
 service:
   port: 3002
