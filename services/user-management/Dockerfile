@@ -1,4 +1,4 @@
-﻿FROM node:22-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -19,6 +19,20 @@ FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
 
 WORKDIR /app
+
+# Runtime requires Node.js only. Remove package managers and their bundled
+# dependency trees to reduce the production image attack surface.
+RUN rm -rf \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack \
+    && rm -f \
+      /usr/local/bin/npm \
+      /usr/local/bin/npx \
+      /usr/local/bin/corepack \
+      /usr/local/bin/yarn \
+      /usr/local/bin/yarnpkg \
+      /usr/local/bin/pnpm \
+      /usr/local/bin/pnpx
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
