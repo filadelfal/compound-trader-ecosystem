@@ -1,0 +1,38 @@
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node.js
+node_modules
+dist
+coverage
+.nyc_output
+
+# Python
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+venv
+
+# Local runtime artifacts
+*.log
+tmp
+temp
+
+# Deployment sources are not runtime image inputs
+helm
+k8s
