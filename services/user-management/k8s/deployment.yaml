@@ -17,7 +17,7 @@ spec:
         runAsNonRoot: true
       containers:
         - name: user-management
-          image: ghcr.io/filadelfal/user-management@sha256:0c89b91113eeaf4bbfb567fd6753f2559c327dc283bbbbae0781225fec707c55
+          image: ghcr.io/filadelfal/user-management@sha256:5db12fc54302d29314620ad74ed0f64402d01a7eaec69176eefb8e3547fdb5c0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3002
