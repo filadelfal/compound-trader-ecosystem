@@ -89,5 +89,30 @@ jobs:
             chart_count=$((chart_count + 1))
           done < <(find services -name Chart.yaml -print0)
           test "$chart_count" -eq 25
+      - name: Validate raw Kubernetes manifests
+        shell: bash
+        run: |
+          mapfile -d '' manifests < <(find services -path '*/k8s/*.yaml' -type f -print0 | sort -z)
+
+          if [[ "${#manifests[@]}" -eq 0 ]]; then
+            echo "No raw Kubernetes manifests were found."
+            exit 1
+          fi
+
+          printf 'Validating %d raw Kubernetes manifests:\n' "${#manifests[@]}"
+          printf ' - %s\n' "${manifests[@]}"
+
+          container_paths=()
+          for manifest in "${manifests[@]}"; do
+            container_paths+=("/work/$manifest")
+          done
+
+          docker run --rm \
+            --volume "$PWD:/work:ro" \
+            ghcr.io/yannh/kubeconform:v0.8.0@sha256:faffaf43f95aa6425306e1ab8d6fcad72acb9049158f38e574c085ea1ec0f64e \
+            -strict \
+            -summary \
+            "${container_paths[@]}"
+
       - name: Build every service
         run: docker compose -f compose.yaml build
