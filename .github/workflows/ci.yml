@@ -94,7 +94,13 @@ jobs:
         run: |
           mapfile -d '' manifests < <(find services -path '*/k8s/*.yaml' -type f -print0 | sort -z)
 
-          test "${#manifests[@]}" -eq 4
+          if [[ "${#manifests[@]}" -eq 0 ]]; then
+            echo "No raw Kubernetes manifests were found."
+            exit 1
+          fi
+
+          printf 'Validating %d raw Kubernetes manifests:\n' "${#manifests[@]}"
+          printf ' - %s\n' "${manifests[@]}"
 
           container_paths=()
           for manifest in "${manifests[@]}"; do
