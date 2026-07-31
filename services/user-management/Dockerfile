@@ -7,6 +7,7 @@ COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci --no-audit --no-fund
 
 COPY src ./src
+COPY scripts ./scripts
 
 RUN npm run build
 
@@ -38,6 +39,7 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY migrations ./migrations
 
 RUN chown -R node:node /app
 
