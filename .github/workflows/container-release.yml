@@ -9,6 +9,15 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      service:
+        description: Service to publish
+        required: true
+        default: user-management
+        type: choice
+        options:
+          - user-management
+          - all
 
 permissions:
   contents: read
@@ -20,10 +29,15 @@ concurrency:
 jobs:
   validate-release-inputs:
     runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.matrix.outputs.services }}
     steps:
       - uses: actions/checkout@v7
       - name: Validate service release inputs
+        id: matrix
         shell: bash
+        env:
+          REQUESTED_SERVICE: ${{ inputs.service || 'all' }}
         run: |
           mapfile -t services < <(find services -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort)
           test "${#services[@]}" -eq 25
@@ -31,6 +45,17 @@ jobs:
             test -f "services/$service/Dockerfile"
             test -f "services/$service/.dockerignore"
           done
+
+          if [[ "$REQUESTED_SERVICE" == "all" ]]; then
+            selected="$(printf '%s\n' "${services[@]}" | jq -R . | jq -sc .)"
+          elif printf '%s\n' "${services[@]}" | grep -Fxq "$REQUESTED_SERVICE"; then
+            selected="$(jq -cn --arg service "$REQUESTED_SERVICE" '[$service]')"
+          else
+            echo "Unknown service: $REQUESTED_SERVICE"
+            exit 1
+          fi
+
+          echo "services=$selected" >> "$GITHUB_OUTPUT"
 
   publish:
     if: github.event_name != 'pull_request'
@@ -45,37 +70,31 @@ jobs:
       fail-fast: false
       max-parallel: 5
       matrix:
-        service:
-          - admin-panel
-          - ai-analyst
-          - ai-coach
-          - ai-mentor
-          - ai-risk
-          - alert-engine
-          - analytics-engine
-          - api-gateway
-          - atlas-forge
-          - backtest-engine
-          - cloud-infra
-          - community
-          - education
-          - future-ai
-          - journal-engine
-          - market-data
-          - marketplace
-          - mobile-backend
-          - news-engine
-          - portfolio-engine
-          - propfirm-mode
-          - security-audit
-          - strategy-engine
-          - trading-engine
-          - user-management
+        service: ${{ fromJSON(needs.validate-release-inputs.outputs.services) }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
+      - name: Build image for security scan
+        uses: docker/build-push-action@v7
+        with:
+          context: services/${{ matrix.service }}
+          platforms: linux/amd64
+          load: true
+          tags: local/${{ matrix.service }}:scan
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Scan image before publication
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: local/${{ matrix.service }}:scan
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+          scanners: vuln
 
       - name: Log in to GHCR
         uses: docker/login-action@v4
@@ -93,8 +112,8 @@ jobs:
             type=sha,format=long,prefix=sha-
             type=semver,pattern={{version}}
 
-      - name: Build and publish image
-        id: build
+      - name: Publish verified image
+        id: publish
         uses: docker/build-push-action@v7
         with:
           context: services/${{ matrix.service }}
@@ -107,21 +126,11 @@ jobs:
           provenance: mode=max
           sbom: true
 
-      - name: Scan published image
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}@${{ steps.build.outputs.digest }}
-          format: table
-          exit-code: 1
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-          scanners: vuln
-
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.0
 
       - name: Sign published image
         env:
           IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}
-          DIGEST: ${{ steps.build.outputs.digest }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
         run: cosign sign --yes "${IMAGE}@${DIGEST}"
