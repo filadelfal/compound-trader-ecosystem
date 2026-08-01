@@ -2,14 +2,18 @@ import express from "express";
 import client from "prom-client";
 import { config } from "./config";
 import { checkDatabase } from "./db";
-import { checkCache } from "./cache";
+import { checkCache, redis } from "./cache";
 import { authenticate, requireRoles } from "./auth";
 import { createServiceProxy } from "./proxy";
+import { observeRequests } from "./request-observability";
+import { createRateLimit, RedisRateLimitStore } from "./rate-limit";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
 export const app = express();
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
+app.use(observeRequests);
 app.use(express.json({ limit: "1mb" }));
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -46,7 +50,12 @@ app.get("/api/v1/ping", (_req, res) => {
 });
 
 const userManagementProxy = createServiceProxy(config.USER_MANAGEMENT_URL);
-app.use("/api/v1/auth", userManagementProxy);
+const authRateLimit = createRateLimit(new RedisRateLimitStore(redis), {
+  prefix: "gateway:rate-limit:auth",
+  max: config.AUTH_RATE_LIMIT_MAX,
+  windowSeconds: config.AUTH_RATE_LIMIT_WINDOW_SECONDS,
+});
+app.use("/api/v1/auth", ...(config.NODE_ENV === "test" ? [] : [authRateLimit]), userManagementProxy);
 app.use("/api/v1/users", authenticate, userManagementProxy);
 
 app.get("/api/v1/me", authenticate, (req, res) => {
