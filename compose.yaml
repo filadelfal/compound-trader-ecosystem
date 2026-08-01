@@ -549,7 +549,10 @@
                                                              "SERVICE_NAME":  "api-gateway",
                                                              "LOG_LEVEL":  "info",
                                                              "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
+                                                             "REDIS_URL":  "redis://redis:6379/0",
+                                                             "JWT_ACCESS_SECRET":  "${JWT_ACCESS_SECRET}",
+                                                             "JWT_ISSUER":  "compound-trader",
+                                                             "JWT_AUDIENCE":  "compound-trader-platform"
                                                          },
                                          "depends_on":  {
                                                             "redis":  {

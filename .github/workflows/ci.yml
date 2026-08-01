@@ -8,6 +8,33 @@ permissions:
   contents: read
 
 jobs:
+  api-gateway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/api-gateway
+    env:
+      NODE_ENV: test
+      JWT_ACCESS_SECRET: ci-access-secret-0123456789abcdef-ci-access-secret-0123456789abcdef
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: services/api-gateway/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Test authentication boundary
+        run: npm test
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
   user-management:
     runs-on: ubuntu-latest
     timeout-minutes: 15

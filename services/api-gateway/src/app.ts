@@ -3,12 +3,20 @@ import client from "prom-client";
 import { config } from "./config";
 import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
+import { authenticate, requireRoles } from "./auth";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
 export const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", service: config.SERVICE_NAME });
@@ -34,6 +42,14 @@ app.get("/metrics", async (_req, res) => {
 
 app.get("/api/v1/ping", (_req, res) => {
   res.status(200).json({ message: "pong", service: config.SERVICE_NAME });
+});
+
+app.get("/api/v1/me", authenticate, (req, res) => {
+  res.status(200).json({ data: req.auth });
+});
+
+app.get("/api/v1/admin/ping", authenticate, requireRoles("admin"), (_req, res) => {
+  res.status(200).json({ message: "pong", service: config.SERVICE_NAME, scope: "admin" });
 });
 
 app.use((_req, res) => {
