@@ -89,11 +89,13 @@ try {
 
     Assert-LastExitCode "Could not read readiness response."
 
-    if ($ReadyResponse -notmatch '"ready"\s*:\s*true') {
+
+    $ReadyText = $ReadyResponse -join [Environment]::NewLine
+    if ($ReadyText -notmatch '"ready"\s*:\s*true') {
         throw "Unexpected readiness response: $ReadyResponse"
     }
 
-    Write-Host "Readiness response: $ReadyResponse"
+    Write-Host "Readiness response: $ReadyText"
 }
 finally {
     kubectl delete pod $ProbeName `
