@@ -19,3 +19,11 @@ rejected. Trusted user identity and roles come only from the verified token.
 
 Set `JWT_ACCESS_SECRET` to the same secret used by user-management. Production
 startup rejects the built-in development secret.
+
+## Service routing
+
+Only explicit route families are proxied. `/api/v1/auth/*` reaches user
+management for registration and session workflows. `/api/v1/users/*` requires
+a valid gateway access token. The proxy applies a five-second timeout, limits
+response size, does not follow redirects, filters response headers, and replaces
+caller-supplied identity headers with identity derived from verified claims.

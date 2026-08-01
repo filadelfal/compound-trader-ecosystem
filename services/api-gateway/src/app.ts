@@ -4,6 +4,7 @@ import { config } from "./config";
 import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
 import { authenticate, requireRoles } from "./auth";
+import { createServiceProxy } from "./proxy";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -44,6 +45,10 @@ app.get("/api/v1/ping", (_req, res) => {
   res.status(200).json({ message: "pong", service: config.SERVICE_NAME });
 });
 
+const userManagementProxy = createServiceProxy(config.USER_MANAGEMENT_URL);
+app.use("/api/v1/auth", userManagementProxy);
+app.use("/api/v1/users", authenticate, userManagementProxy);
+
 app.get("/api/v1/me", authenticate, (req, res) => {
   res.status(200).json({ data: req.auth });
 });
@@ -54,4 +59,13 @@ app.get("/api/v1/admin/ping", authenticate, requireRoles("admin"), (_req, res) =
 
 app.use((_req, res) => {
   res.status(404).json({ error: "not_found" });
+});
+
+app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  res.status(502).json({
+    error: {
+      code: "upstream_unavailable",
+      message: error instanceof Error ? "The requested service is unavailable" : "Upstream request failed"
+    }
+  });
 });
