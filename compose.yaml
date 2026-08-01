@@ -549,9 +549,20 @@
                                                              "SERVICE_NAME":  "api-gateway",
                                                              "LOG_LEVEL":  "info",
                                                              "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
+                                                             "REDIS_URL":  "redis://redis:6379/0",
+                                                             "JWT_ACCESS_SECRET":  "${JWT_ACCESS_SECRET}",
+                                                             "JWT_ISSUER":  "compound-trader",
+                                                             "JWT_AUDIENCE":  "compound-trader-platform",
+                                                             "USER_MANAGEMENT_URL":  "http://user-management:3002",
+                                                             "UPSTREAM_TIMEOUT_MS":  "5000",
+                                                             "UPSTREAM_MAX_RESPONSE_BYTES":  "2097152",
+                                                             "AUTH_RATE_LIMIT_MAX":  "60",
+                                                             "AUTH_RATE_LIMIT_WINDOW_SECONDS":  "60"
                                                          },
                                          "depends_on":  {
+                                                            "user-management":  {
+                                                                                   "condition":  "service_started"
+                                                                               },
                                                             "redis":  {
                                                                           "condition":  "service_healthy"
                                                                       }
