@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.routes import router as api_router
 from app.cache import check_cache, close_cache, connect_cache
@@ -16,6 +18,26 @@ from app.services.provider_service import ProviderFailoverService
 
 configure_logging()
 logger = get_logger()
+
+
+# ---------------------------------------------------------------------------
+# Request-body size guard
+# ---------------------------------------------------------------------------
+
+
+class _MaxBodySizeMiddleware(BaseHTTPMiddleware):
+    """Reject requests whose body exceeds the configured maximum."""
+
+    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > settings.max_request_body_bytes:
+            return JSONResponse(status_code=413, content={"detail": "request body too large"})
+        return await call_next(request)
+
+
+# ---------------------------------------------------------------------------
+# Application lifespan
+# ---------------------------------------------------------------------------
 
 
 @asynccontextmanager
@@ -36,6 +58,8 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title=settings.service_name, version="1.0.0", lifespan=lifespan)
+
+app.add_middleware(_MaxBodySizeMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.parsed_cors_origins,
@@ -67,7 +91,10 @@ async def ready() -> dict[str, bool | str]:
         await check_database()
         await check_cache()
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        # Log the full error internally (with correlation ID) but never expose
+        # raw exception text to callers.
+        logger.error("readiness_check_failed", error_type=type(exc).__name__, error=str(exc))
+        raise HTTPException(status_code=503, detail="service unavailable") from exc
     return {"ready": True, "service": settings.service_name}
 
 

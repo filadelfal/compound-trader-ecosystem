@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 from time import perf_counter
 
@@ -7,6 +8,7 @@ import httpx
 
 from app.cache import redis_client
 from app.config import settings
+from app.core.logging import get_logger
 from app.db.models import CandleInterval
 from app.providers.alphavantage import AlphaVantageProvider
 from app.providers.base import MarketDataProvider, ProviderCandle, ProviderError, ProviderPrice
@@ -15,6 +17,8 @@ from app.providers.mt5 import MT5Provider
 from app.providers.polygon import PolygonProvider
 from app.providers.twelvedata import TwelveDataProvider
 from app.schemas import ProviderStatus
+
+logger = get_logger()
 
 
 class ProviderFailoverService:
@@ -31,24 +35,42 @@ class ProviderFailoverService:
     async def close(self) -> None:
         await self.client.aclose()
 
-    async def _set_status(self, status: ProviderStatus) -> None:
-        key = f"provider_status:{status.provider}"
-        await redis_client.hset(
-            key,
-            mapping={
-                "healthy": str(status.healthy).lower(),
-                "latency_ms": "" if status.latency_ms is None else str(status.latency_ms),
-                "error": status.error or "",
-                "checked_at": status.checked_at.isoformat(),
-            },
-        )
-        await redis_client.expire(key, 300)
+    async def _set_status(self, status_obj: ProviderStatus) -> None:
+        """Best-effort telemetry write.  A Redis failure must never discard
+        a valid provider result – the caller always gets the data back first."""
+        key = f"provider_status:{status_obj.provider}"
+        try:
+            await redis_client.hset(
+                key,
+                mapping={
+                    "healthy": str(status_obj.healthy).lower(),
+                    "latency_ms": "" if status_obj.latency_ms is None else str(status_obj.latency_ms),
+                    "error": status_obj.error or "",
+                    "checked_at": status_obj.checked_at.isoformat(),
+                },
+            )
+            await redis_client.expire(key, 300)
+        except asyncio.CancelledError:
+            # Re-raise cancellation – never swallow it.
+            raise
+        except Exception as exc:
+            # Status writes are best-effort; log the failure without exposing
+            # provider data or secrets, then carry on.
+            logger.warning(
+                "provider_status_write_failed",
+                provider=status_obj.provider,
+                error_type=type(exc).__name__,
+            )
 
     async def get_provider_status(self) -> list[ProviderStatus]:
         rows: list[ProviderStatus] = []
         for name in self.providers:
             key = f"provider_status:{name}"
-            state = await redis_client.hgetall(key)
+            try:
+                state = await redis_client.hgetall(key)
+            except Exception as exc:
+                logger.warning("provider_status_read_failed", provider=name, error_type=type(exc).__name__)
+                state = {}
             if not state:
                 rows.append(
                     ProviderStatus(
@@ -71,7 +93,7 @@ class ProviderFailoverService:
             )
         return rows
 
-    async def _execute_with_failover(self, operation_name: str, symbol: str, handler) -> object:
+    async def _execute_with_failover(self, operation_name: str, symbol: str, handler) -> object:  # type: ignore[type-arg]
         errors: list[str] = []
 
         for provider_name in settings.parsed_provider_priority:
@@ -82,8 +104,34 @@ class ProviderFailoverService:
             start = perf_counter()
             try:
                 result = await handler(provider)
+            except asyncio.CancelledError:
+                # Propagate task-cancellation; do not count it as a provider error.
+                raise
+            except ProviderError as exc:
                 latency_ms = round((perf_counter() - start) * 1000, 2)
-                await self._set_status(
+                errors.append(f"{provider_name}:{exc}")
+                # Record failure telemetry in the background so that it cannot
+                # block or discard a result from a later provider.
+                asyncio.ensure_future(
+                    self._set_status(
+                        ProviderStatus(
+                            provider=provider_name,
+                            healthy=False,
+                            latency_ms=latency_ms,
+                            error=str(exc),
+                            checked_at=datetime.now(UTC),
+                        )
+                    )
+                )
+                continue
+            except Exception:
+                # Unexpected (programming) errors are NOT swallowed.
+                raise
+
+            latency_ms = round((perf_counter() - start) * 1000, 2)
+            # Fire-and-forget: telemetry failure must not discard the result.
+            asyncio.ensure_future(
+                self._set_status(
                     ProviderStatus(
                         provider=provider_name,
                         healthy=True,
@@ -92,19 +140,8 @@ class ProviderFailoverService:
                         checked_at=datetime.now(UTC),
                     )
                 )
-                return result
-            except Exception as exc:
-                latency_ms = round((perf_counter() - start) * 1000, 2)
-                errors.append(f"{provider_name}:{exc}")
-                await self._set_status(
-                    ProviderStatus(
-                        provider=provider_name,
-                        healthy=False,
-                        latency_ms=latency_ms,
-                        error=str(exc),
-                        checked_at=datetime.now(UTC),
-                    )
-                )
+            )
+            return result
 
         raise ProviderError(f"all providers failed for {operation_name} on {symbol}: {' | '.join(errors)}")
 
