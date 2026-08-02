@@ -5,6 +5,17 @@ image:
   pullPolicy: IfNotPresent
 service:
   port: 3003
+config:
+  executionSecretName: compound-runtime-secrets
+  executionSecretKey: execution-api-key
+  marketDataUrl: http://market-data:3004
+  maxOrderQuantity: "1000000"
+  maxOrderNotional: "10000000"
+  allowShortSelling: false
+  paperTradingEnabled: false
+  paperStartingCash: "100000"
+  paperBrokerPollInterval: 250ms
+  paperBrokerRetryBase: 2s
 resources:
   requests:
     cpu: 100m

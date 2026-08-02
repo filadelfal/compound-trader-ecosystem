@@ -36,6 +36,23 @@ spec:
                 secretKeyRef:
                   name: compound-runtime-secrets
                   key: redis-url
+            - name: JWT_ACCESS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: jwt-access-secret
+            - name: JWT_ISSUER
+              value: compound-trader
+            - name: JWT_AUDIENCE
+              value: compound-trader-platform
+            - name: USER_MANAGEMENT_URL
+              value: http://user-management:3002
+            - name: TRADING_ENGINE_URL
+              value: http://trading-engine:3003
+            - name: MARKET_DATA_URL
+              value: http://market-data:3004
+            - name: UPSTREAM_TIMEOUT_MS
+              value: "5000"
           readinessProbe:
             httpGet:
               path: /ready

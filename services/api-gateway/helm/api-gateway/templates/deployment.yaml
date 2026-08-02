@@ -21,5 +21,22 @@ spec:
           env:
             - name: PORT
               value: "{{ .Values.service.port }}"
+            - name: JWT_ACCESS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.jwtSecretName }}
+                  key: {{ .Values.config.jwtSecretKey }}
+            - name: JWT_ISSUER
+              value: {{ .Values.config.jwtIssuer | quote }}
+            - name: JWT_AUDIENCE
+              value: {{ .Values.config.jwtAudience | quote }}
+            - name: USER_MANAGEMENT_URL
+              value: {{ .Values.config.userManagementUrl | quote }}
+            - name: TRADING_ENGINE_URL
+              value: {{ .Values.config.tradingEngineUrl | quote }}
+            - name: MARKET_DATA_URL
+              value: {{ .Values.config.marketDataUrl | quote }}
+            - name: UPSTREAM_TIMEOUT_MS
+              value: {{ .Values.config.upstreamTimeoutMs | quote }}
           resources:
 {{ toYaml .Values.resources | nindent 12 }}

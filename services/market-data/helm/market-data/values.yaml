@@ -5,6 +5,9 @@ image:
   pullPolicy: IfNotPresent
 service:
   port: 3004
+config:
+  quoteStaleAfterSeconds: 60
+  runtimeSecretName: compound-runtime-secrets
 resources:
   requests:
     cpu: 100m

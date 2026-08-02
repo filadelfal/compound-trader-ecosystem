@@ -36,6 +36,13 @@ spec:
                 secretKeyRef:
                   name: compound-runtime-secrets
                   key: redis-url
+            - name: MARKET_DATA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: market-data-api-key
+            - name: QUOTE_STALE_AFTER_SECONDS
+              value: "60"
           readinessProbe:
             httpGet:
               path: /ready

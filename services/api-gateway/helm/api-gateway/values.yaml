@@ -5,6 +5,15 @@ image:
   pullPolicy: IfNotPresent
 service:
   port: 3022
+config:
+  jwtSecretName: compound-runtime-secrets
+  jwtSecretKey: jwt-access-secret
+  jwtIssuer: compound-trader
+  jwtAudience: compound-trader-platform
+  userManagementUrl: http://user-management:3002
+  tradingEngineUrl: http://trading-engine:3003
+  marketDataUrl: http://market-data:3004
+  upstreamTimeoutMs: 5000
 resources:
   requests:
     cpu: 100m

@@ -31,13 +31,14 @@
                                                            "3002:3002"
                                                        ],
                                              "environment":  {
+                                                                 "NODE_ENV":  "development",
                                                                  "PORT":  "3002",
                                                                  "SERVICE_NAME":  "user-management",
                                                                  "LOG_LEVEL":  "info",
                                                                  "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                  "REDIS_URL":  "redis://redis:6379/0",
-                                                                 "JWT_ACCESS_SECRET":  "${JWT_ACCESS_SECRET}",
-                                                                 "JWT_REFRESH_SECRET":  "${JWT_REFRESH_SECRET}",
+                                                                 "JWT_ACCESS_SECRET":  "${JWT_ACCESS_SECRET:-local_access_secret_change_me_0123456789_abcdefghijklmnopqrstuvwxyz_ABCD}",
+                                                                 "JWT_REFRESH_SECRET":  "${JWT_REFRESH_SECRET:-local_refresh_secret_change_me_0123456789_abcdefghijklmnopqrstuvwxyz_ABC}",
                                                                  "JWT_ISSUER":  "compound-trader",
                                                                  "JWT_AUDIENCE":  "compound-trader-platform",
                                                                  "JWT_ACCESS_EXPIRES_IN":  "15m",
@@ -49,6 +50,17 @@
                                                                  "ARGON2_PARALLELISM":  "1",
                                                                  "ACCOUNT_LOCK_THRESHOLD":  "5",
                                                                  "ACCOUNT_LOCK_MINUTES":  "15"
+                                                             },
+                                             "healthcheck":  {
+                                                                 "test":  [
+                                                                              "CMD",
+                                                                              "node",
+                                                                              "-e",
+                                                                              "require('http').get('http://127.0.0.1:3002/ready',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+                                                                          ],
+                                                                 "interval":  "5s",
+                                                                 "timeout":  "3s",
+                                                                 "retries":  20
                                                              },
                                              "depends_on":  {
                                                                 "postgres":  {
@@ -75,7 +87,16 @@
                                                                 "SERVICE_NAME":  "trading-engine",
                                                                 "LOG_LEVEL":  "info",
                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                "REDIS_URL":  "redis://redis:6379/0"
+                                                                "REDIS_URL":  "redis://redis:6379/0",
+                                                                "MAX_ORDER_QUANTITY":  "${MAX_ORDER_QUANTITY:-1000000}",
+                                                                "MAX_ORDER_NOTIONAL":  "${MAX_ORDER_NOTIONAL:-10000000}",
+                                                                "EXECUTION_API_KEY":  "${EXECUTION_API_KEY:-local_execution_key_change_me}",
+                                                                "ALLOW_SHORT_SELLING":  "${ALLOW_SHORT_SELLING:-false}",
+                                                                "MARKET_DATA_URL":  "${MARKET_DATA_URL:-http://market-data:3004}",
+                                                                "PAPER_TRADING_ENABLED":  "${PAPER_TRADING_ENABLED:-true}",
+                                                                "PAPER_STARTING_CASH":  "${PAPER_STARTING_CASH:-100000}",
+                                                                "PAPER_BROKER_POLL_INTERVAL":  "${PAPER_BROKER_POLL_INTERVAL:-250ms}",
+                                                                "PAPER_BROKER_RETRY_BASE":  "${PAPER_BROKER_RETRY_BASE:-2s}"
                                                             },
                                             "depends_on":  {
                                                                "postgres":  {
@@ -83,6 +104,9 @@
                                                                             },
                                                                "redis":  {
                                                                              "condition":  "service_healthy"
+                                                                         },
+                                                               "market-data":  {
+                                                                                   "condition":  "service_healthy"
                                                                          }
                                                            },
                                             "restart":  "unless-stopped",
@@ -102,9 +126,14 @@
                                                              "SERVICE_NAME":  "market-data",
                                                              "LOG_LEVEL":  "info",
                                                              "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
+                                                             "REDIS_URL":  "redis://redis:6379/0",
+                                                             "MARKET_DATA_API_KEY":  "${MARKET_DATA_API_KEY:-local_market_data_key_change_me}",
+                                                             "QUOTE_STALE_AFTER_SECONDS":  "${QUOTE_STALE_AFTER_SECONDS:-60}"
                                                          },
                                          "depends_on":  {
+                                                            "postgres":  {
+                                                                             "condition":  "service_healthy"
+                                                                         },
                                                             "redis":  {
                                                                           "condition":  "service_healthy"
                                                                       }
@@ -549,11 +578,27 @@
                                                              "SERVICE_NAME":  "api-gateway",
                                                              "LOG_LEVEL":  "info",
                                                              "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
+                                                             "REDIS_URL":  "redis://redis:6379/0",
+                                                             "JWT_ACCESS_SECRET":  "${JWT_ACCESS_SECRET:-local_access_secret_change_me_0123456789_abcdefghijklmnopqrstuvwxyz_ABCD}",
+                                                             "JWT_ISSUER":  "compound-trader",
+                                                             "JWT_AUDIENCE":  "compound-trader-platform",
+                                                             "USER_MANAGEMENT_URL":  "http://user-management:3002",
+                                                             "TRADING_ENGINE_URL":  "http://trading-engine:3003",
+                                                             "MARKET_DATA_URL":  "http://market-data:3004",
+                                                             "UPSTREAM_TIMEOUT_MS":  "5000"
                                                          },
                                          "depends_on":  {
                                                             "redis":  {
                                                                           "condition":  "service_healthy"
+                                                                      },
+                                                            "user-management":  {
+                                                                                   "condition":  "service_healthy"
+                                                                               },
+                                                            "trading-engine":  {
+                                                                                   "condition":  "service_healthy"
+                                                                               },
+                                                            "market-data":  {
+                                                                                "condition":  "service_healthy"
                                                                       }
                                                         },
                                          "restart":  "unless-stopped",

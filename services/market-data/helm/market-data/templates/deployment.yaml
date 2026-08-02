@@ -21,5 +21,22 @@ spec:
           env:
             - name: PORT
               value: "{{ .Values.service.port }}"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.runtimeSecretName }}
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.runtimeSecretName }}
+                  key: redis-url
+            - name: MARKET_DATA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.runtimeSecretName }}
+                  key: market-data-api-key
+            - name: QUOTE_STALE_AFTER_SECONDS
+              value: "{{ .Values.config.quoteStaleAfterSeconds }}"
           resources:
 {{ toYaml .Values.resources | nindent 12 }}

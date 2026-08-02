@@ -21,5 +21,26 @@ spec:
           env:
             - name: PORT
               value: "{{ .Values.service.port }}"
+            - name: EXECUTION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.executionSecretName }}
+                  key: {{ .Values.config.executionSecretKey }}
+            - name: MARKET_DATA_URL
+              value: {{ .Values.config.marketDataUrl | quote }}
+            - name: MAX_ORDER_QUANTITY
+              value: {{ .Values.config.maxOrderQuantity | quote }}
+            - name: MAX_ORDER_NOTIONAL
+              value: {{ .Values.config.maxOrderNotional | quote }}
+            - name: ALLOW_SHORT_SELLING
+              value: {{ .Values.config.allowShortSelling | quote }}
+            - name: PAPER_TRADING_ENABLED
+              value: {{ .Values.config.paperTradingEnabled | quote }}
+            - name: PAPER_STARTING_CASH
+              value: {{ .Values.config.paperStartingCash | quote }}
+            - name: PAPER_BROKER_POLL_INTERVAL
+              value: {{ .Values.config.paperBrokerPollInterval | quote }}
+            - name: PAPER_BROKER_RETRY_BASE
+              value: {{ .Values.config.paperBrokerRetryBase | quote }}
           resources:
 {{ toYaml .Values.resources | nindent 12 }}

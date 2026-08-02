@@ -36,6 +36,27 @@ spec:
                 secretKeyRef:
                   name: compound-runtime-secrets
                   key: redis-url
+            - name: EXECUTION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: execution-api-key
+            - name: MARKET_DATA_URL
+              value: http://market-data:3004
+            - name: MAX_ORDER_QUANTITY
+              value: "1000000"
+            - name: MAX_ORDER_NOTIONAL
+              value: "10000000"
+            - name: ALLOW_SHORT_SELLING
+              value: "false"
+            - name: PAPER_TRADING_ENABLED
+              value: "false"
+            - name: PAPER_STARTING_CASH
+              value: "100000"
+            - name: PAPER_BROKER_POLL_INTERVAL
+              value: 250ms
+            - name: PAPER_BROKER_RETRY_BASE
+              value: 2s
           readinessProbe:
             httpGet:
               path: /ready

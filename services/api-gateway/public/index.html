@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07110d">
+  <title>Compound Trader</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="noise"></div>
+  <main>
+    <section id="auth-view" class="auth-shell">
+      <div class="brand-panel">
+        <div class="brand"><span class="mark">C</span><span>COMPOUND</span></div>
+        <p class="eyebrow">Paper trading, built for discipline</p>
+        <h1>Trade the plan.<br><em>Compound the edge.</em></h1>
+        <p class="lead">A focused execution desk with live portfolio valuation, durable orders, and account-level guardrails.</p>
+        <div class="proof-row"><span>Exact-decimal ledger</span><span>Immutable events</span><span>Risk-first execution</span></div>
+      </div>
+      <form id="login-form" class="login-card">
+        <p class="eyebrow">Secure access</p>
+        <h2>Welcome back</h2>
+        <label>Email<input id="email" name="email" type="email" autocomplete="email" required placeholder="trader@example.com"></label>
+        <label>Password<input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Your password"></label>
+        <button class="primary" type="submit">Enter trading desk <span>→</span></button>
+        <p id="login-error" class="form-error" role="alert"></p>
+        <p class="fine">Paper execution only. Markets involve risk.</p>
+      </form>
+    </section>
+
+    <section id="desk-view" class="desk hidden">
+      <header>
+        <div class="brand"><span class="mark">C</span><span>COMPOUND</span><small>TRADING DESK</small></div>
+        <div class="header-actions"><span id="connection" class="status"><i></i> Connected</span><button id="refresh" class="ghost">Refresh</button><button id="logout" class="ghost">Sign out</button></div>
+      </header>
+
+      <div class="desk-grid">
+        <aside>
+          <p class="section-label">Workspace</p>
+          <nav><button class="active">Overview</button><button data-focus="ticket">Trade ticket</button><button data-focus="orders">Orders</button><button data-focus="risk">Risk controls</button></nav>
+          <div class="aside-bottom"><p>Paper account</p><strong id="account-state">Active</strong><small>Execution uses current bid/ask quotes.</small></div>
+        </aside>
+
+        <div class="content">
+          <div class="welcome"><div><p class="eyebrow">Portfolio command center</p><h2>Good discipline compounds.</h2></div><p id="last-updated">Loading account…</p></div>
+          <div id="notice" class="notice hidden" role="status"></div>
+
+          <section class="metrics">
+            <article><p>Net liquidation value</p><strong id="net-value">—</strong><small id="unrealized">Unrealized —</small></article>
+            <article><p>Available cash</p><strong id="cash">—</strong><small id="reserved-cash">Reserved —</small></article>
+            <article><p>Gross exposure</p><strong id="exposure">—</strong><small id="exposure-limit">Limit —</small></article>
+            <article><p>Today's realized P&amp;L</p><strong id="realized">—</strong><small id="loss-limit">Daily stop —</small></article>
+          </section>
+
+          <div class="work-grid">
+            <section id="ticket" class="panel ticket">
+              <div class="panel-head"><div><p class="section-label">Execution</p><h3>Trade ticket</h3></div><div class="segmented"><button data-side="buy" class="active">Buy</button><button data-side="sell">Sell</button></div></div>
+              <form id="order-form">
+                <div class="quote-line"><label>Symbol<input id="symbol" value="AAPL" maxlength="10" required></label><div><span id="quote-state">Quote</span><strong id="quote-price">—</strong><small id="quote-spread">Enter a symbol</small></div></div>
+                <div class="form-row"><label>Order type<select id="order-type"><option value="market">Market</option><option value="limit">Limit</option></select></label><label>Quantity<input id="quantity" type="number" min="0.00000001" step="0.00000001" value="1" required></label></div>
+                <label id="limit-wrap" class="hidden">Limit price<input id="limit-price" type="number" min="0.00000001" step="0.00000001"></label>
+                <div class="estimate"><span>Estimated notional</span><strong id="estimate">—</strong></div>
+                <button id="submit-order" class="primary buy" type="submit">Review &amp; submit buy</button>
+              </form>
+            </section>
+
+            <section id="risk" class="panel risk-panel">
+              <div class="panel-head"><div><p class="section-label">Protection</p><h3>Risk controls</h3></div><label class="switch"><input id="trading-enabled" type="checkbox"><span></span></label></div>
+              <form id="risk-form">
+                <label>Maximum open orders<input id="max-open" type="number" min="1" max="100"></label>
+                <label>Maximum gross exposure<input id="max-exposure" type="number" min="1" step="0.01"></label>
+                <label>Daily loss stop<input id="max-loss" type="number" min="1" step="0.01"></label>
+                <button class="secondary" type="submit">Save risk limits</button>
+              </form>
+              <p class="risk-note">Turning trading off immediately cancels every working order and releases reserved buying power.</p>
+            </section>
+          </div>
+
+          <section id="orders" class="panel table-panel">
+            <div class="panel-head"><div><p class="section-label">Activity</p><h3>Recent orders</h3></div><span id="open-orders" class="pill">0 open</span></div>
+            <div class="table-wrap"><table><thead><tr><th>Symbol</th><th>Side</th><th>Type</th><th>Quantity</th><th>Price</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody id="orders-body"><tr><td colspan="8" class="empty">No orders yet</td></tr></tbody></table></div>
+          </section>
+          <footer>Compound Trader Ecosystem · Paper environment · <span id="footer-time"></span></footer>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>
