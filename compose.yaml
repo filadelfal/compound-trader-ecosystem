@@ -1,722 +1,719 @@
-﻿{
-    "name":  "compound-trader",
-    "services":  {
-                     "atlas-forge":  {
-                                         "build":  {
-                                                       "context":  "./services/atlas-forge"
-                                                   },
-                                         "ports":  [
-                                                       "3001:3001"
-                                                   ],
-                                         "environment":  {
-                                                             "PORT":  "3001",
-                                                             "SERVICE_NAME":  "atlas-forge",
-                                                             "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
-                                                         },
-                                         "depends_on":  {
-
-                                                        },
-                                         "restart":  "unless-stopped",
-                                         "networks":  [
-                                                          "compound-net"
-                                                      ]
-                                     },
-                     "user-management":  {
-                                             "build":  {
-                                                           "context":  "./services/user-management"
-                                                       },
-                                             "ports":  [
-                                                           "3002:3002"
-                                                       ],
-                                             "environment":  {
-                                                                 "PORT":  "3002",
-                                                                 "SERVICE_NAME":  "user-management",
-                                                                 "LOG_LEVEL":  "info",
-                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                 "REDIS_URL":  "redis://redis:6379/0",
-                                                                 "JWT_ACCESS_SECRET":  "${JWT_ACCESS_SECRET}",
-                                                                 "JWT_REFRESH_SECRET":  "${JWT_REFRESH_SECRET}",
-                                                                 "JWT_ISSUER":  "compound-trader",
-                                                                 "JWT_AUDIENCE":  "compound-trader-platform",
-                                                                 "JWT_ACCESS_EXPIRES_IN":  "15m",
-                                                                 "JWT_REFRESH_EXPIRES_DAYS":  "7",
-                                                                 "EMAIL_VERIFICATION_EXPIRES_HOURS":  "24",
-                                                                 "PASSWORD_RESET_EXPIRES_MINUTES":  "30",
-                                                                 "ARGON2_MEMORY_COST":  "65536",
-                                                                 "ARGON2_TIME_COST":  "3",
-                                                                 "ARGON2_PARALLELISM":  "1",
-                                                                 "ACCOUNT_LOCK_THRESHOLD":  "5",
-                                                                 "ACCOUNT_LOCK_MINUTES":  "15"
-                                                             },
-                                             "depends_on":  {
-                                                                "postgres":  {
-                                                                                 "condition":  "service_healthy"
-                                                                             },
-                                                                "redis":  {
-                                                                              "condition":  "service_healthy"
-                                                                          }
-                                                            },
-                                             "restart":  "unless-stopped",
-                                             "networks":  [
-                                                              "compound-net"
-                                                          ]
-                                         },
-                     "trading-engine":  {
-                                            "build":  {
-                                                          "context":  "./services/trading-engine"
-                                                      },
-                                            "ports":  [
-                                                          "3003:3003"
-                                                      ],
-                                            "environment":  {
-                                                                "PORT":  "3003",
-                                                                "SERVICE_NAME":  "trading-engine",
-                                                                "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                "REDIS_URL":  "redis://redis:6379/0"
-                                                            },
-                                            "depends_on":  {
-                                                               "postgres":  {
-                                                                                "condition":  "service_healthy"
-                                                                            },
-                                                               "redis":  {
-                                                                             "condition":  "service_healthy"
-                                                                         }
-                                                           },
-                                            "restart":  "unless-stopped",
-                                            "networks":  [
-                                                             "compound-net"
-                                                         ]
-                                        },
-                     "market-data":  {
-                                         "build":  {
-                                                       "context":  "./services/market-data"
-                                                   },
-                                         "ports":  [
-                                                       "3004:3004"
-                                                   ],
-                                         "environment":  {
-                                                             "PORT":  "3004",
-                                                             "SERVICE_NAME":  "market-data",
-                                                             "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
-                                                         },
-                                         "depends_on":  {
-                                                            "redis":  {
-                                                                          "condition":  "service_healthy"
-                                                                      }
-                                                        },
-                                         "restart":  "unless-stopped",
-                                         "networks":  [
-                                                          "compound-net"
-                                                      ]
-                                     },
-                     "ai-analyst":  {
-                                        "build":  {
-                                                      "context":  "./services/ai-analyst"
-                                                  },
-                                        "ports":  [
-                                                      "3005:3005"
-                                                  ],
-                                        "environment":  {
-                                                            "PORT":  "3005",
-                                                            "SERVICE_NAME":  "ai-analyst",
-                                                            "LOG_LEVEL":  "info",
-                                                            "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                            "REDIS_URL":  "redis://redis:6379/0"
-                                                        },
-                                        "depends_on":  {
-
-                                                       },
-                                        "restart":  "unless-stopped",
-                                        "networks":  [
-                                                         "compound-net"
-                                                     ]
-                                    },
-                     "ai-mentor":  {
-                                       "build":  {
-                                                     "context":  "./services/ai-mentor"
-                                                 },
-                                       "ports":  [
-                                                     "3006:3006"
-                                                 ],
-                                       "environment":  {
-                                                           "PORT":  "3006",
-                                                           "SERVICE_NAME":  "ai-mentor",
-                                                           "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                           "REDIS_URL":  "redis://redis:6379/0"
-                                                       },
-                                       "depends_on":  {
-
-                                                      },
-                                       "restart":  "unless-stopped",
-                                       "networks":  [
-                                                        "compound-net"
-                                                    ]
-                                   },
-                     "ai-risk":  {
-                                     "build":  {
-                                                   "context":  "./services/ai-risk"
-                                               },
-                                     "ports":  [
-                                                   "3007:3007"
-                                               ],
-                                     "environment":  {
-                                                         "PORT":  "3007",
-                                                         "SERVICE_NAME":  "ai-risk",
-                                                         "LOG_LEVEL":  "info",
-                                                         "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                         "REDIS_URL":  "redis://redis:6379/0"
-                                                     },
-                                     "depends_on":  {
-                                                        "postgres":  {
-                                                                         "condition":  "service_healthy"
-                                                                     }
-                                                    },
-                                     "restart":  "unless-stopped",
-                                     "networks":  [
-                                                      "compound-net"
-                                                  ]
-                                 },
-                     "ai-coach":  {
-                                      "build":  {
-                                                    "context":  "./services/ai-coach"
-                                                },
-                                      "ports":  [
-                                                    "3008:3008"
-                                                ],
-                                      "environment":  {
-                                                          "PORT":  "3008",
-                                                          "SERVICE_NAME":  "ai-coach",
-                                                          "LOG_LEVEL":  "info",
-                                                          "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                          "REDIS_URL":  "redis://redis:6379/0"
-                                                      },
-                                      "depends_on":  {
-
-                                                     },
-                                      "restart":  "unless-stopped",
-                                      "networks":  [
-                                                       "compound-net"
-                                                   ]
-                                  },
-                     "strategy-engine":  {
-                                             "build":  {
-                                                           "context":  "./services/strategy-engine"
-                                                       },
-                                             "ports":  [
-                                                           "3009:3009"
-                                                       ],
-                                             "environment":  {
-                                                                 "PORT":  "3009",
-                                                                 "SERVICE_NAME":  "strategy-engine",
-                                                                 "LOG_LEVEL":  "info",
-                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                 "REDIS_URL":  "redis://redis:6379/0"
-                                                             },
-                                             "depends_on":  {
-                                                                "postgres":  {
-                                                                                 "condition":  "service_healthy"
-                                                                             },
-                                                                "redis":  {
-                                                                              "condition":  "service_healthy"
-                                                                          }
-                                                            },
-                                             "restart":  "unless-stopped",
-                                             "networks":  [
-                                                              "compound-net"
-                                                          ]
-                                         },
-                     "backtest-engine":  {
-                                             "build":  {
-                                                           "context":  "./services/backtest-engine"
-                                                       },
-                                             "ports":  [
-                                                           "3010:3010"
-                                                       ],
-                                             "environment":  {
-                                                                 "PORT":  "3010",
-                                                                 "SERVICE_NAME":  "backtest-engine",
-                                                                 "LOG_LEVEL":  "info",
-                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                 "REDIS_URL":  "redis://redis:6379/0"
-                                                             },
-                                             "depends_on":  {
-                                                                "postgres":  {
-                                                                                 "condition":  "service_healthy"
-                                                                             }
-                                                            },
-                                             "restart":  "unless-stopped",
-                                             "networks":  [
-                                                              "compound-net"
-                                                          ]
-                                         },
-                     "portfolio-engine":  {
-                                              "build":  {
-                                                            "context":  "./services/portfolio-engine"
-                                                        },
-                                              "ports":  [
-                                                            "3011:3011"
-                                                        ],
-                                              "environment":  {
-                                                                  "PORT":  "3011",
-                                                                  "SERVICE_NAME":  "portfolio-engine",
-                                                                  "LOG_LEVEL":  "info",
-                                                                  "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                  "REDIS_URL":  "redis://redis:6379/0"
-                                                              },
-                                              "depends_on":  {
-                                                                 "postgres":  {
-                                                                                  "condition":  "service_healthy"
-                                                                              },
-                                                                 "redis":  {
-                                                                               "condition":  "service_healthy"
-                                                                           }
-                                                             },
-                                              "restart":  "unless-stopped",
-                                              "networks":  [
-                                                               "compound-net"
-                                                           ]
-                                          },
-                     "journal-engine":  {
-                                            "build":  {
-                                                          "context":  "./services/journal-engine"
-                                                      },
-                                            "ports":  [
-                                                          "3012:3012"
-                                                      ],
-                                            "environment":  {
-                                                                "PORT":  "3012",
-                                                                "SERVICE_NAME":  "journal-engine",
-                                                                "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                "REDIS_URL":  "redis://redis:6379/0"
-                                                            },
-                                            "depends_on":  {
-                                                               "postgres":  {
-                                                                                "condition":  "service_healthy"
-                                                                            }
-                                                           },
-                                            "restart":  "unless-stopped",
-                                            "networks":  [
-                                                             "compound-net"
-                                                         ]
-                                        },
-                     "news-engine":  {
-                                         "build":  {
-                                                       "context":  "./services/news-engine"
-                                                   },
-                                         "ports":  [
-                                                       "3013:3013"
-                                                   ],
-                                         "environment":  {
-                                                             "PORT":  "3013",
-                                                             "SERVICE_NAME":  "news-engine",
-                                                             "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
-                                                         },
-                                         "depends_on":  {
-                                                            "redis":  {
-                                                                          "condition":  "service_healthy"
-                                                                      }
-                                                        },
-                                         "restart":  "unless-stopped",
-                                         "networks":  [
-                                                          "compound-net"
-                                                      ]
-                                     },
-                     "alert-engine":  {
-                                          "build":  {
-                                                        "context":  "./services/alert-engine"
-                                                    },
-                                          "ports":  [
-                                                        "3014:3014"
-                                                    ],
-                                          "environment":  {
-                                                              "PORT":  "3014",
-                                                              "SERVICE_NAME":  "alert-engine",
-                                                              "LOG_LEVEL":  "info",
-                                                              "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                              "REDIS_URL":  "redis://redis:6379/0"
-                                                          },
-                                          "depends_on":  {
-                                                             "postgres":  {
-                                                                              "condition":  "service_healthy"
-                                                                          },
-                                                             "redis":  {
-                                                                           "condition":  "service_healthy"
-                                                                       }
-                                                         },
-                                          "restart":  "unless-stopped",
-                                          "networks":  [
-                                                           "compound-net"
-                                                       ]
-                                      },
-                     "analytics-engine":  {
-                                              "build":  {
-                                                            "context":  "./services/analytics-engine"
-                                                        },
-                                              "ports":  [
-                                                            "3015:3015"
-                                                        ],
-                                              "environment":  {
-                                                                  "PORT":  "3015",
-                                                                  "SERVICE_NAME":  "analytics-engine",
-                                                                  "LOG_LEVEL":  "info",
-                                                                  "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                  "REDIS_URL":  "redis://redis:6379/0"
-                                                              },
-                                              "depends_on":  {
-                                                                 "postgres":  {
-                                                                                  "condition":  "service_healthy"
-                                                                              },
-                                                                 "redis":  {
-                                                                               "condition":  "service_healthy"
-                                                                           }
-                                                             },
-                                              "restart":  "unless-stopped",
-                                              "networks":  [
-                                                               "compound-net"
-                                                           ]
-                                          },
-                     "propfirm-mode":  {
-                                           "build":  {
-                                                         "context":  "./services/propfirm-mode"
-                                                     },
-                                           "ports":  [
-                                                         "3016:3016"
-                                                     ],
-                                           "environment":  {
-                                                               "PORT":  "3016",
-                                                               "SERVICE_NAME":  "propfirm-mode",
-                                                               "LOG_LEVEL":  "info",
-                                                               "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                               "REDIS_URL":  "redis://redis:6379/0"
-                                                           },
-                                           "depends_on":  {
-                                                              "postgres":  {
-                                                                               "condition":  "service_healthy"
-                                                                           }
-                                                          },
-                                           "restart":  "unless-stopped",
-                                           "networks":  [
-                                                            "compound-net"
-                                                        ]
-                                       },
-                     "marketplace":  {
-                                         "build":  {
-                                                       "context":  "./services/marketplace"
-                                                   },
-                                         "ports":  [
-                                                       "3017:3017"
-                                                   ],
-                                         "environment":  {
-                                                             "PORT":  "3017",
-                                                             "SERVICE_NAME":  "marketplace",
-                                                             "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
-                                                         },
-                                         "depends_on":  {
-                                                            "postgres":  {
-                                                                             "condition":  "service_healthy"
-                                                                         },
-                                                            "redis":  {
-                                                                          "condition":  "service_healthy"
-                                                                      }
-                                                        },
-                                         "restart":  "unless-stopped",
-                                         "networks":  [
-                                                          "compound-net"
-                                                      ]
-                                     },
-                     "education":  {
-                                       "build":  {
-                                                     "context":  "./services/education"
-                                                 },
-                                       "ports":  [
-                                                     "3018:3018"
-                                                 ],
-                                       "environment":  {
-                                                           "PORT":  "3018",
-                                                           "SERVICE_NAME":  "education",
-                                                           "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                           "REDIS_URL":  "redis://redis:6379/0"
-                                                       },
-                                       "depends_on":  {
-                                                          "postgres":  {
-                                                                           "condition":  "service_healthy"
-                                                                       },
-                                                          "redis":  {
-                                                                        "condition":  "service_healthy"
-                                                                    }
-                                                      },
-                                       "restart":  "unless-stopped",
-                                       "networks":  [
-                                                        "compound-net"
-                                                    ]
-                                   },
-                     "community":  {
-                                       "build":  {
-                                                     "context":  "./services/community"
-                                                 },
-                                       "ports":  [
-                                                     "3019:3019"
-                                                 ],
-                                       "environment":  {
-                                                           "PORT":  "3019",
-                                                           "SERVICE_NAME":  "community",
-                                                           "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                           "REDIS_URL":  "redis://redis:6379/0"
-                                                       },
-                                       "depends_on":  {
-                                                          "postgres":  {
-                                                                           "condition":  "service_healthy"
-                                                                       },
-                                                          "redis":  {
-                                                                        "condition":  "service_healthy"
-                                                                    }
-                                                      },
-                                       "restart":  "unless-stopped",
-                                       "networks":  [
-                                                        "compound-net"
-                                                    ]
-                                   },
-                     "admin-panel":  {
-                                         "build":  {
-                                                       "context":  "./services/admin-panel"
-                                                   },
-                                         "ports":  [
-                                                       "3020:3020"
-                                                   ],
-                                         "environment":  {
-                                                             "PORT":  "3020",
-                                                             "SERVICE_NAME":  "admin-panel",
-                                                             "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
-                                                         },
-                                         "depends_on":  {
-                                                            "postgres":  {
-                                                                             "condition":  "service_healthy"
-                                                                         }
-                                                        },
-                                         "restart":  "unless-stopped",
-                                         "networks":  [
-                                                          "compound-net"
-                                                      ]
-                                     },
-                     "security-audit":  {
-                                            "build":  {
-                                                          "context":  "./services/security-audit"
-                                                      },
-                                            "ports":  [
-                                                          "3021:3021"
-                                                      ],
-                                            "environment":  {
-                                                                "PORT":  "3021",
-                                                                "SERVICE_NAME":  "security-audit",
-                                                                "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                "REDIS_URL":  "redis://redis:6379/0"
-                                                            },
-                                            "depends_on":  {
-                                                               "postgres":  {
-                                                                                "condition":  "service_healthy"
-                                                                            }
-                                                           },
-                                            "restart":  "unless-stopped",
-                                            "networks":  [
-                                                             "compound-net"
-                                                         ]
-                                        },
-                     "api-gateway":  {
-                                         "build":  {
-                                                       "context":  "./services/api-gateway"
-                                                   },
-                                         "ports":  [
-                                                       "3022:3022"
-                                                   ],
-                                         "environment":  {
-                                                             "PORT":  "3022",
-                                                             "SERVICE_NAME":  "api-gateway",
-                                                             "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
-                                                         },
-                                         "depends_on":  {
-                                                            "redis":  {
-                                                                          "condition":  "service_healthy"
-                                                                      }
-                                                        },
-                                         "restart":  "unless-stopped",
-                                         "networks":  [
-                                                          "compound-net"
-                                                      ]
-                                     },
-                     "mobile-backend":  {
-                                            "build":  {
-                                                          "context":  "./services/mobile-backend"
-                                                      },
-                                            "ports":  [
-                                                          "3023:3023"
-                                                      ],
-                                            "environment":  {
-                                                                "PORT":  "3023",
-                                                                "SERVICE_NAME":  "mobile-backend",
-                                                                "LOG_LEVEL":  "info",
-                                                                "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                                "REDIS_URL":  "redis://redis:6379/0"
-                                                            },
-                                            "depends_on":  {
-                                                               "postgres":  {
-                                                                                "condition":  "service_healthy"
-                                                                            },
-                                                               "redis":  {
-                                                                             "condition":  "service_healthy"
-                                                                         }
-                                                           },
-                                            "restart":  "unless-stopped",
-                                            "networks":  [
-                                                             "compound-net"
-                                                         ]
-                                        },
-                     "cloud-infra":  {
-                                         "build":  {
-                                                       "context":  "./services/cloud-infra"
-                                                   },
-                                         "ports":  [
-                                                       "3024:3024"
-                                                   ],
-                                         "environment":  {
-                                                             "PORT":  "3024",
-                                                             "SERVICE_NAME":  "cloud-infra",
-                                                             "LOG_LEVEL":  "info",
-                                                             "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                             "REDIS_URL":  "redis://redis:6379/0"
-                                                         },
-                                         "depends_on":  {
-
-                                                        },
-                                         "restart":  "unless-stopped",
-                                         "networks":  [
-                                                          "compound-net"
-                                                      ]
-                                     },
-                     "future-ai":  {
-                                       "build":  {
-                                                     "context":  "./services/future-ai"
-                                                 },
-                                       "ports":  [
-                                                     "3025:3025"
-                                                 ],
-                                       "environment":  {
-                                                           "PORT":  "3025",
-                                                           "SERVICE_NAME":  "future-ai",
-                                                           "LOG_LEVEL":  "info",
-                                                           "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
-                                                           "REDIS_URL":  "redis://redis:6379/0"
-                                                       },
-                                       "depends_on":  {
-
-                                                      },
-                                       "restart":  "unless-stopped",
-                                       "networks":  [
-                                                        "compound-net"
-                                                    ]
-                                   },
-                     "postgres":  {
-                                      "image":  "postgres:16-alpine",
-                                      "environment":  {
-                                                          "POSTGRES_USER":  "compound",
-                                                          "POSTGRES_PASSWORD":  "${POSTGRES_PASSWORD:-compound_dev_password}",
-                                                          "POSTGRES_DB":  "compound"
-                                                      },
-                                      "ports":  [
-                                                    "5432:5432"
-                                                ],
-                                      "volumes":  [
-                                                      "postgres_data:/var/lib/postgresql/data"
-                                                  ],
-                                      "healthcheck":  {
-                                                          "test":  [
-                                                                       "CMD-SHELL",
-                                                                       "pg_isready -U compound -d compound"
-                                                                   ],
-                                                          "interval":  "10s",
-                                                          "timeout":  "5s",
-                                                          "retries":  10
-                                                      },
-                                      "restart":  "unless-stopped",
-                                      "networks":  [
-                                                       "compound-net"
-                                                   ]
-                                  },
-                     "redis":  {
-                                   "image":  "redis:7-alpine",
-                                   "ports":  [
-                                                 "6379:6379"
-                                             ],
-                                   "healthcheck":  {
-                                                       "test":  [
-                                                                    "CMD",
-                                                                    "redis-cli",
-                                                                    "ping"
-                                                                ],
-                                                       "interval":  "10s",
-                                                       "timeout":  "5s",
-                                                       "retries":  10
-                                                   },
-                                   "restart":  "unless-stopped",
-                                   "networks":  [
-                                                    "compound-net"
-                                                ]
-                               },
-                     "prometheus":  {
-                                        "image":  "prom/prometheus:v3.1.0",
-                                        "ports":  [
-                                                      "9090:9090"
-                                                  ],
-                                        "volumes":  [
-                                                        "./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
-                                                    ],
-                                        "restart":  "unless-stopped",
-                                        "networks":  [
-                                                         "compound-net"
-                                                     ]
-                                    },
-                     "grafana":  {
-                                     "image":  "grafana/grafana:11.4.0",
-                                     "ports":  [
-                                                   "3030:3000"
-                                               ],
-                                     "volumes":  [
-                                                     "grafana_data:/var/lib/grafana"
-                                                 ],
-                                     "restart":  "unless-stopped",
-                                     "networks":  [
-                                                      "compound-net"
-                                                  ]
-                                 }
-                 },
-    "volumes":  {
-                    "postgres_data":  {
-
-                                      },
-                    "grafana_data":  {
-
-                                     }
+{
+    "name": "compound-trader",
+    "services": {
+        "atlas-forge": {
+            "build": {
+                "context": "./services/atlas-forge"
+            },
+            "ports": [
+                "3001:3001"
+            ],
+            "environment": {
+                "PORT": "3001",
+                "SERVICE_NAME": "atlas-forge",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {},
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "user-management": {
+            "build": {
+                "context": "./services/user-management"
+            },
+            "ports": [
+                "3002:3002"
+            ],
+            "environment": {
+                "PORT": "3002",
+                "SERVICE_NAME": "user-management",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0",
+                "JWT_ACCESS_SECRET": "${JWT_ACCESS_SECRET}",
+                "JWT_REFRESH_SECRET": "${JWT_REFRESH_SECRET}",
+                "JWT_ISSUER": "compound-trader",
+                "JWT_AUDIENCE": "compound-trader-platform",
+                "JWT_ACCESS_EXPIRES_IN": "15m",
+                "JWT_REFRESH_EXPIRES_DAYS": "7",
+                "EMAIL_VERIFICATION_EXPIRES_HOURS": "24",
+                "PASSWORD_RESET_EXPIRES_MINUTES": "30",
+                "ARGON2_MEMORY_COST": "65536",
+                "ARGON2_TIME_COST": "3",
+                "ARGON2_PARALLELISM": "1",
+                "ACCOUNT_LOCK_THRESHOLD": "5",
+                "ACCOUNT_LOCK_MINUTES": "15"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
                 },
-    "networks":  {
-                     "compound-net":  {
-                                          "driver":  "bridge"
-                                      }
-                 }
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "trading-engine": {
+            "build": {
+                "context": "./services/trading-engine"
+            },
+            "ports": [
+                "3003:3003"
+            ],
+            "environment": {
+                "PORT": "3003",
+                "SERVICE_NAME": "trading-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "market-data": {
+            "build": {
+                "context": "./services/market-data"
+            },
+            "ports": [
+                "3004:3004"
+            ],
+            "environment": {
+                "PORT": "3004",
+                "SERVICE_NAME": "market-data",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0",
+                "JWT_SECRET": "${JWT_ACCESS_SECRET}",
+                "JWT_ALGORITHM": "HS256",
+                "API_KEYS": "${MARKET_DATA_API_KEYS:-local-market-data-key}",
+                "RATE_LIMIT_REQUESTS": "120",
+                "RATE_LIMIT_WINDOW_SECONDS": "60",
+                "PROVIDER_PRIORITY": "twelvedata,alphavantage,polygon,binance,mt5",
+                "TWELVEDATA_API_KEY": "${TWELVEDATA_API_KEY:-}",
+                "ALPHAVANTAGE_API_KEY": "${ALPHAVANTAGE_API_KEY:-}",
+                "POLYGON_API_KEY": "${POLYGON_API_KEY:-}",
+                "MT5_BASE_URL": "${MT5_BASE_URL:-}"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "ai-analyst": {
+            "build": {
+                "context": "./services/ai-analyst"
+            },
+            "ports": [
+                "3005:3005"
+            ],
+            "environment": {
+                "PORT": "3005",
+                "SERVICE_NAME": "ai-analyst",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {},
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "ai-mentor": {
+            "build": {
+                "context": "./services/ai-mentor"
+            },
+            "ports": [
+                "3006:3006"
+            ],
+            "environment": {
+                "PORT": "3006",
+                "SERVICE_NAME": "ai-mentor",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {},
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "ai-risk": {
+            "build": {
+                "context": "./services/ai-risk"
+            },
+            "ports": [
+                "3007:3007"
+            ],
+            "environment": {
+                "PORT": "3007",
+                "SERVICE_NAME": "ai-risk",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "ai-coach": {
+            "build": {
+                "context": "./services/ai-coach"
+            },
+            "ports": [
+                "3008:3008"
+            ],
+            "environment": {
+                "PORT": "3008",
+                "SERVICE_NAME": "ai-coach",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {},
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "strategy-engine": {
+            "build": {
+                "context": "./services/strategy-engine"
+            },
+            "ports": [
+                "3009:3009"
+            ],
+            "environment": {
+                "PORT": "3009",
+                "SERVICE_NAME": "strategy-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "backtest-engine": {
+            "build": {
+                "context": "./services/backtest-engine"
+            },
+            "ports": [
+                "3010:3010"
+            ],
+            "environment": {
+                "PORT": "3010",
+                "SERVICE_NAME": "backtest-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "portfolio-engine": {
+            "build": {
+                "context": "./services/portfolio-engine"
+            },
+            "ports": [
+                "3011:3011"
+            ],
+            "environment": {
+                "PORT": "3011",
+                "SERVICE_NAME": "portfolio-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "journal-engine": {
+            "build": {
+                "context": "./services/journal-engine"
+            },
+            "ports": [
+                "3012:3012"
+            ],
+            "environment": {
+                "PORT": "3012",
+                "SERVICE_NAME": "journal-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "news-engine": {
+            "build": {
+                "context": "./services/news-engine"
+            },
+            "ports": [
+                "3013:3013"
+            ],
+            "environment": {
+                "PORT": "3013",
+                "SERVICE_NAME": "news-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "alert-engine": {
+            "build": {
+                "context": "./services/alert-engine"
+            },
+            "ports": [
+                "3014:3014"
+            ],
+            "environment": {
+                "PORT": "3014",
+                "SERVICE_NAME": "alert-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "analytics-engine": {
+            "build": {
+                "context": "./services/analytics-engine"
+            },
+            "ports": [
+                "3015:3015"
+            ],
+            "environment": {
+                "PORT": "3015",
+                "SERVICE_NAME": "analytics-engine",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "propfirm-mode": {
+            "build": {
+                "context": "./services/propfirm-mode"
+            },
+            "ports": [
+                "3016:3016"
+            ],
+            "environment": {
+                "PORT": "3016",
+                "SERVICE_NAME": "propfirm-mode",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "marketplace": {
+            "build": {
+                "context": "./services/marketplace"
+            },
+            "ports": [
+                "3017:3017"
+            ],
+            "environment": {
+                "PORT": "3017",
+                "SERVICE_NAME": "marketplace",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "education": {
+            "build": {
+                "context": "./services/education"
+            },
+            "ports": [
+                "3018:3018"
+            ],
+            "environment": {
+                "PORT": "3018",
+                "SERVICE_NAME": "education",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "community": {
+            "build": {
+                "context": "./services/community"
+            },
+            "ports": [
+                "3019:3019"
+            ],
+            "environment": {
+                "PORT": "3019",
+                "SERVICE_NAME": "community",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "admin-panel": {
+            "build": {
+                "context": "./services/admin-panel"
+            },
+            "ports": [
+                "3020:3020"
+            ],
+            "environment": {
+                "PORT": "3020",
+                "SERVICE_NAME": "admin-panel",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "security-audit": {
+            "build": {
+                "context": "./services/security-audit"
+            },
+            "ports": [
+                "3021:3021"
+            ],
+            "environment": {
+                "PORT": "3021",
+                "SERVICE_NAME": "security-audit",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "api-gateway": {
+            "build": {
+                "context": "./services/api-gateway"
+            },
+            "ports": [
+                "3022:3022"
+            ],
+            "environment": {
+                "PORT": "3022",
+                "SERVICE_NAME": "api-gateway",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "mobile-backend": {
+            "build": {
+                "context": "./services/mobile-backend"
+            },
+            "ports": [
+                "3023:3023"
+            ],
+            "environment": {
+                "PORT": "3023",
+                "SERVICE_NAME": "mobile-backend",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {
+                "postgres": {
+                    "condition": "service_healthy"
+                },
+                "redis": {
+                    "condition": "service_healthy"
+                }
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "cloud-infra": {
+            "build": {
+                "context": "./services/cloud-infra"
+            },
+            "ports": [
+                "3024:3024"
+            ],
+            "environment": {
+                "PORT": "3024",
+                "SERVICE_NAME": "cloud-infra",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {},
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "future-ai": {
+            "build": {
+                "context": "./services/future-ai"
+            },
+            "ports": [
+                "3025:3025"
+            ],
+            "environment": {
+                "PORT": "3025",
+                "SERVICE_NAME": "future-ai",
+                "LOG_LEVEL": "info",
+                "DATABASE_URL": "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
+                "REDIS_URL": "redis://redis:6379/0"
+            },
+            "depends_on": {},
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "postgres": {
+            "image": "postgres:16-alpine",
+            "environment": {
+                "POSTGRES_USER": "compound",
+                "POSTGRES_PASSWORD": "${POSTGRES_PASSWORD:-compound_dev_password}",
+                "POSTGRES_DB": "compound"
+            },
+            "ports": [
+                "5432:5432"
+            ],
+            "volumes": [
+                "postgres_data:/var/lib/postgresql/data"
+            ],
+            "healthcheck": {
+                "test": [
+                    "CMD-SHELL",
+                    "pg_isready -U compound -d compound"
+                ],
+                "interval": "10s",
+                "timeout": "5s",
+                "retries": 10
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "redis": {
+            "image": "redis:7-alpine",
+            "ports": [
+                "6379:6379"
+            ],
+            "healthcheck": {
+                "test": [
+                    "CMD",
+                    "redis-cli",
+                    "ping"
+                ],
+                "interval": "10s",
+                "timeout": "5s",
+                "retries": 10
+            },
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "prometheus": {
+            "image": "prom/prometheus:v3.1.0",
+            "ports": [
+                "9090:9090"
+            ],
+            "volumes": [
+                "./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+            ],
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        },
+        "grafana": {
+            "image": "grafana/grafana:11.4.0",
+            "ports": [
+                "3030:3000"
+            ],
+            "volumes": [
+                "grafana_data:/var/lib/grafana"
+            ],
+            "restart": "unless-stopped",
+            "networks": [
+                "compound-net"
+            ]
+        }
+    },
+    "volumes": {
+        "postgres_data": {},
+        "grafana_data": {}
+    },
+    "networks": {
+        "compound-net": {
+            "driver": "bridge"
+        }
+    }
 }

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "market-data.fullname" . }}-config
+data:
+  PORT: "{{ .Values.service.port }}"
+  SERVICE_NAME: "market-data"
+  LOG_LEVEL: {{ .Values.config.LOG_LEVEL | quote }}
+  JWT_ALGORITHM: {{ .Values.config.JWT_ALGORITHM | quote }}
+  RATE_LIMIT_REQUESTS: {{ .Values.config.RATE_LIMIT_REQUESTS | quote }}
+  RATE_LIMIT_WINDOW_SECONDS: {{ .Values.config.RATE_LIMIT_WINDOW_SECONDS | quote }}
+  CORS_ALLOW_ORIGINS: {{ .Values.config.CORS_ALLOW_ORIGINS | quote }}
+  CORS_ALLOW_METHODS: {{ .Values.config.CORS_ALLOW_METHODS | quote }}
+  CORS_ALLOW_HEADERS: {{ .Values.config.CORS_ALLOW_HEADERS | quote }}
+  PROVIDER_PRIORITY: {{ .Values.config.PROVIDER_PRIORITY | quote }}

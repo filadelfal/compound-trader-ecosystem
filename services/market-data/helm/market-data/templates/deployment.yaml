@@ -18,8 +18,61 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "market-data.fullname" . }}-config
           env:
-            - name: PORT
-              value: "{{ .Values.service.port }}"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: redis-url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: jwt-secret
+            - name: API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: api-keys
+            - name: TWELVEDATA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: twelvedata-api-key
+            - name: ALPHAVANTAGE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: alphavantage-api-key
+            - name: POLYGON_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: polygon-api-key
+            - name: MT5_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: mt5-base-url
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
           resources:
 {{ toYaml .Values.resources | nindent 12 }}
