@@ -21,11 +21,10 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3004
+          envFrom:
+            - configMapRef:
+                name: market-data-config
           env:
-            - name: PORT
-              value: "3004"
-            - name: SERVICE_NAME
-              value: "market-data"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -36,6 +35,36 @@ spec:
                 secretKeyRef:
                   name: compound-runtime-secrets
                   key: redis-url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: jwt-secret
+            - name: API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: api-keys
+            - name: TWELVEDATA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: twelvedata-api-key
+            - name: ALPHAVANTAGE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: alphavantage-api-key
+            - name: POLYGON_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: polygon-api-key
+            - name: MT5_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compound-runtime-secrets
+                  key: mt5-base-url
           readinessProbe:
             httpGet:
               path: /ready
@@ -55,16 +84,3 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: market-data
-  namespace: compound-trader
-spec:
-  selector:
-    app: market-data
-  ports:
-    - name: http
-      port: 3004
-      targetPort: 3004

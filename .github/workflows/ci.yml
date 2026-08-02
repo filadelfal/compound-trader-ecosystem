@@ -56,6 +56,63 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
+  market-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: compound_test
+          POSTGRES_PASSWORD: compound_test_password
+          POSTGRES_DB: compound_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U compound_test -d compound_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: services/market-data
+    env:
+      DATABASE_URL: ******localhost:5432/compound_test
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET: ci-market-data-jwt-secret
+      API_KEYS: ci-market-data-api-key
+      PROVIDER_PRIORITY: binance
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: services/market-data/requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check app tests
+      - name: Format check
+        run: ruff format --check app tests
+      - name: Apply database migrations
+        run: alembic upgrade head
+      - name: Run tests
+        run: pytest
+      - name: Security scan
+        run: pip-audit -r requirements.txt
+      - name: Build market-data image
+        run: docker build -t compoundtrader/market-data:ci .
+
   validate-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
