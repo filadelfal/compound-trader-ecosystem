@@ -4,6 +4,7 @@ import { config } from "./config";
 import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
 import { evaluateTradingDecision } from "./decision";
+import { evaluateEmaPullback } from "./ema-pullback";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -40,6 +41,10 @@ app.get("/api/v1/ping", (_req, res) => {
 app.post("/api/v1/decisions/evaluate", (req, res) => {
   const decision = evaluateTradingDecision(req.body);
   res.status(200).json(decision);
+});
+
+app.post("/api/v1/strategies/ema-pullback/evaluate", (req, res) => {
+  res.status(200).json(evaluateEmaPullback(req.body));
 });
 
 app.use((_req, res) => {
