@@ -16,6 +16,10 @@ fail closed without producing a setup.
 agreement with the closed-candle H4 trend, and at least 0.5 pip separation to
 filter numerical noise. It emits no repeated signal after the crossover candle.
 
+`TREND_CONTINUATION` calculates Wilder ADX 14, +DI, and -DI from closed OHLC
+candles. It requires H1 ADX >= 20, H4 ADX >= 25, matching directional movement,
+and a latest-candle H1 breakout beyond the preceding candle's range.
+
 ## Endpoints
 
 - `GET /health`
@@ -25,3 +29,4 @@ filter numerical noise. It emits no repeated signal after the crossover candle.
 - `POST /api/v1/decisions/evaluate`
 - `POST /api/v1/strategies/ema-pullback/evaluate`
 - `POST /api/v1/strategies/ema-crossover/evaluate`
+- `POST /api/v1/strategies/trend-continuation/evaluate`
