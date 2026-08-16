@@ -4,14 +4,17 @@ import { config } from "./config";
 import { checkDatabase } from "./db";
 import { checkCache, redis } from "./cache";
 import { enrichQuote, quoteInputSchema, RedisQuoteStore, type QuoteStore } from "./quotes";
+import { CandleAggregator, RedisCandleStore, timeframeSchema, type CandleStore, type CandleUpdate } from "./candles";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
 export function createApp(
   quoteStore: QuoteStore = new RedisQuoteStore(redis),
   now: () => Date = () => new Date(),
+  candleStore: CandleStore = new RedisCandleStore(redis),
 ): express.Express {
 const app = express();
+const candleAggregator = new CandleAggregator(candleStore);
 app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
 
@@ -73,7 +76,16 @@ app.post("/api/v1/quotes", async (req, res) => {
     res.status(409).json({ error: result });
     return;
   }
-  res.status(result === "accepted" ? 202 : 200).json({ status: result, quote });
+  let candleUpdates: CandleUpdate[] = [];
+  if (result === "accepted" || result === "duplicate") {
+    try {
+      candleUpdates = await candleAggregator.process(quote);
+    } catch {
+      res.status(503).json({ error: "candle_store_unavailable" });
+      return;
+    }
+  }
+  res.status(result === "accepted" ? 202 : 200).json({ status: result, quote, candleUpdates });
 });
 
 app.get("/api/v1/quotes/:symbol/latest", async (req, res) => {
@@ -94,6 +106,26 @@ app.get("/api/v1/quotes/:symbol/latest", async (req, res) => {
     return;
   }
   res.status(200).json({ quote });
+});
+
+app.get("/api/v1/candles/:symbol/:timeframe", async (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const timeframe = timeframeSchema.safeParse(req.params.timeframe.toUpperCase());
+  if (!/^(EURUSD|GBPUSD|USDJPY)$/.test(symbol) || !timeframe.success) {
+    res.status(400).json({ error: "invalid_candle_query" });
+    return;
+  }
+  const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 1000);
+  try {
+    const [current, closed, gaps] = await Promise.all([
+      candleStore.current(symbol, timeframe.data),
+      candleStore.closed(symbol, timeframe.data, limit),
+      candleStore.gaps(symbol, timeframe.data, limit),
+    ]);
+    res.status(200).json({ symbol, timeframe: timeframe.data, current, closed, gaps });
+  } catch {
+    res.status(503).json({ error: "candle_store_unavailable" });
+  }
 });
 
 app.use((_req, res) => {
