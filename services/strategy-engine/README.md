@@ -12,6 +12,10 @@ on closed H1 and H4 candles, requires both timeframes to agree, and requires a
 completed H1 pullback-and-recovery pattern. Missing, open, or unordered candles
 fail closed without producing a setup.
 
+`EMA_CROSSOVER` requires a fresh EMA 8/21 cross on the latest closed H1 candle,
+agreement with the closed-candle H4 trend, and at least 0.5 pip separation to
+filter numerical noise. It emits no repeated signal after the crossover candle.
+
 ## Endpoints
 
 - `GET /health`
@@ -20,3 +24,4 @@ fail closed without producing a setup.
 - `GET /api/v1/ping`
 - `POST /api/v1/decisions/evaluate`
 - `POST /api/v1/strategies/ema-pullback/evaluate`
+- `POST /api/v1/strategies/ema-crossover/evaluate`
