@@ -3,6 +3,7 @@ import client from "prom-client";
 import { config } from "./config";
 import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
+import { evaluateTradingDecision } from "./decision";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -34,6 +35,11 @@ app.get("/metrics", async (_req, res) => {
 
 app.get("/api/v1/ping", (_req, res) => {
   res.status(200).json({ message: "pong", service: config.SERVICE_NAME });
+});
+
+app.post("/api/v1/decisions/evaluate", (req, res) => {
+  const decision = evaluateTradingDecision(req.body);
+  res.status(200).json(decision);
 });
 
 app.use((_req, res) => {
