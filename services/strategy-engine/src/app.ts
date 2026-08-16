@@ -5,6 +5,7 @@ import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
 import { evaluateTradingDecision } from "./decision";
 import { evaluateEmaPullback } from "./ema-pullback";
+import { evaluateEmaCrossover } from "./ema-crossover";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -45,6 +46,10 @@ app.post("/api/v1/decisions/evaluate", (req, res) => {
 
 app.post("/api/v1/strategies/ema-pullback/evaluate", (req, res) => {
   res.status(200).json(evaluateEmaPullback(req.body));
+});
+
+app.post("/api/v1/strategies/ema-crossover/evaluate", (req, res) => {
+  res.status(200).json(evaluateEmaCrossover(req.body));
 });
 
 app.use((_req, res) => {
