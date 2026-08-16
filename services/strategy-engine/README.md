@@ -24,6 +24,11 @@ and a latest-candle H1 breakout beyond the preceding candle's range.
 00:00-07:59 range, permits entries only from 08:00-10:59 UTC, requires a 10-60
 pip range and a two-pip close beyond it, and permits only one signal per session.
 
+The Strategy Manager accepts one evaluation per enabled strategy, rejects
+malformed or duplicate evaluations and opposing directions, and selects at most
+one setup using a documented priority. Same-direction signals are retained as
+confluence; no signal or any conflict returns `NO_TRADE`.
+
 ## Endpoints
 
 - `GET /health`
@@ -35,3 +40,4 @@ pip range and a two-pip close beyond it, and permits only one signal per session
 - `POST /api/v1/strategies/ema-crossover/evaluate`
 - `POST /api/v1/strategies/trend-continuation/evaluate`
 - `POST /api/v1/strategies/london-breakout/evaluate`
+- `POST /api/v1/strategies/select`
