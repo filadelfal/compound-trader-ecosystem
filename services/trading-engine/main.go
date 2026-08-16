@@ -3,6 +3,8 @@ package main
 import (
     "context"
     "encoding/json"
+	"errors"
+	"io"
     "log"
     "net/http"
     "os"
@@ -25,6 +27,29 @@ func jsonResponse(w http.ResponseWriter, status int, body map[string]any) {
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(status)
     _ = json.NewEncoder(w).Encode(body)
+}
+
+func (app *application) positionSizeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		jsonResponse(w, http.StatusMethodNotAllowed, map[string]any{"error": "method_not_allowed"})
+		return
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	var input positionSizeRequest
+	if err := decoder.Decode(&input); err != nil {
+		jsonResponse(w, http.StatusBadRequest, map[string]any{"outcome": "NO_TRADE", "reasons": []string{"INVALID_INPUT"}})
+		return
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		jsonResponse(w, http.StatusBadRequest, map[string]any{"outcome": "NO_TRADE", "reasons": []string{"INVALID_INPUT"}})
+		return
+	}
+	result := calculatePositionSize(input)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(result)
 }
 
 func main() {
@@ -67,6 +92,7 @@ func main() {
     mux.HandleFunc("/api/v1/ping", func(w http.ResponseWriter, r *http.Request) {
         jsonResponse(w, http.StatusOK, map[string]any{"message": "pong", "service": app.service})
     })
+	mux.HandleFunc("/api/v1/risk/position-size", app.positionSizeHandler)
 
     server := &http.Server{
         Addr:              "0.0.0.0:" + port,
