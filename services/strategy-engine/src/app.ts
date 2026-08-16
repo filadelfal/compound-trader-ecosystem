@@ -7,6 +7,7 @@ import { evaluateTradingDecision } from "./decision";
 import { evaluateEmaPullback } from "./ema-pullback";
 import { evaluateEmaCrossover } from "./ema-crossover";
 import { evaluateAdxTrendContinuation } from "./adx-trend-continuation";
+import { evaluateLondonBreakout } from "./london-breakout";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -55,6 +56,10 @@ app.post("/api/v1/strategies/ema-crossover/evaluate", (req, res) => {
 
 app.post("/api/v1/strategies/trend-continuation/evaluate", (req, res) => {
   res.status(200).json(evaluateAdxTrendContinuation(req.body));
+});
+
+app.post("/api/v1/strategies/london-breakout/evaluate", (req, res) => {
+  res.status(200).json(evaluateLondonBreakout(req.body));
 });
 
 app.use((_req, res) => {

@@ -20,6 +20,10 @@ filter numerical noise. It emits no repeated signal after the crossover candle.
 candles. It requires H1 ADX >= 20, H4 ADX >= 25, matching directional movement,
 and a latest-candle H1 breakout beyond the preceding candle's range.
 
+`LONDON_BREAKOUT` supports EURUSD and GBPUSD. It forms a closed-candle UTC
+00:00-07:59 range, permits entries only from 08:00-10:59 UTC, requires a 10-60
+pip range and a two-pip close beyond it, and permits only one signal per session.
+
 ## Endpoints
 
 - `GET /health`
@@ -30,3 +34,4 @@ and a latest-candle H1 breakout beyond the preceding candle's range.
 - `POST /api/v1/strategies/ema-pullback/evaluate`
 - `POST /api/v1/strategies/ema-crossover/evaluate`
 - `POST /api/v1/strategies/trend-continuation/evaluate`
+- `POST /api/v1/strategies/london-breakout/evaluate`
