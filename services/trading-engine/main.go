@@ -18,9 +18,11 @@ import (
 )
 
 type application struct {
-    service string
-    db      *pgxpool.Pool
-    cache   *redis.Client
+	service    string
+	db         *pgxpool.Pool
+	cache      *redis.Client
+	paperStore paperOrderStore
+	now        func() time.Time
 }
 
 func jsonResponse(w http.ResponseWriter, status int, body map[string]any) {
@@ -72,7 +74,13 @@ func main() {
     cache := redis.NewClient(redisOptions)
     defer cache.Close()
 
-    app := &application{service: service, db: db, cache: cache}
+	app := &application{
+		service: service,
+		db: db,
+		cache: cache,
+		paperStore: redisPaperOrderStore{client: cache, retention: paperOrderRetention},
+		now: time.Now,
+	}
     mux := http.NewServeMux()
     mux.Handle("/metrics", promhttp.Handler())
     mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -93,6 +101,7 @@ func main() {
         jsonResponse(w, http.StatusOK, map[string]any{"message": "pong", "service": app.service})
     })
 	mux.HandleFunc("/api/v1/risk/position-size", app.positionSizeHandler)
+	mux.HandleFunc("/api/v1/paper/orders", app.paperOrderHandler)
 
     server := &http.Server{
         Addr:              "0.0.0.0:" + port,
