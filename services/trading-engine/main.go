@@ -22,6 +22,7 @@ type application struct {
 	db         *pgxpool.Pool
 	cache      *redis.Client
 	paperStore paperOrderStore
+	lifecycleStore paperLifecycleStore
 	now        func() time.Time
 }
 
@@ -79,6 +80,7 @@ func main() {
 		db: db,
 		cache: cache,
 		paperStore: redisPaperOrderStore{client: cache, retention: paperOrderRetention},
+		lifecycleStore: redisPaperLifecycleStore{client: cache, retention: paperLifecycleRetention},
 		now: time.Now,
 	}
     mux := http.NewServeMux()
@@ -102,6 +104,9 @@ func main() {
     })
 	mux.HandleFunc("/api/v1/risk/position-size", app.positionSizeHandler)
 	mux.HandleFunc("/api/v1/paper/orders", app.paperOrderHandler)
+	mux.HandleFunc("/api/v1/paper/positions", app.openPaperPositionHandler)
+	mux.HandleFunc("/api/v1/paper/positions/quotes", app.paperQuoteHandler)
+	mux.HandleFunc("/api/v1/paper/journal", app.paperJournalHandler)
 
     server := &http.Server{
         Addr:              "0.0.0.0:" + port,

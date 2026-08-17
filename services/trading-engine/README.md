@@ -15,6 +15,15 @@ input. Redis idempotency records are retained for seven days, so retrying the
 same request ID returns the original immutable paper order instead of creating
 another one.
 
+Paper positions can be opened only from a previously accepted paper order.
+Every opening and quote event requires a unique event ID. Exact retries are
+idempotent; conflicting reuse is rejected. Quote processing uses bid to close
+BUY positions and ask to close SELL positions, rejects stale or out-of-order
+quotes and spreads above five pips, applies stop-loss before take-profit, and
+calculates deterministic realized or unrealized P&L using the supplied
+account-currency pip value.
+Position snapshots are appended to a 30-day immutable paper journal.
+
 ## Endpoints
 
 - `GET /health`
@@ -23,3 +32,6 @@ another one.
 - `GET /api/v1/ping`
 - `POST /api/v1/risk/position-size`
 - `POST /api/v1/paper/orders`
+- `POST /api/v1/paper/positions`
+- `POST /api/v1/paper/positions/quotes`
+- `GET /api/v1/paper/journal?orderId=...`

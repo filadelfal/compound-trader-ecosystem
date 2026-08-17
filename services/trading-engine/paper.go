@@ -68,6 +68,7 @@ type paperOrderResult struct {
 
 type paperOrderStore interface {
 	Create(context.Context, paperOrder) (paperOrder, bool, error)
+	Get(context.Context, string) (paperOrder, error)
 }
 
 type redisPaperOrderStore struct {
@@ -99,6 +100,18 @@ func (store redisPaperOrderStore) Create(ctx context.Context, order paperOrder) 
 	return existing, false, nil
 }
 
+func (store redisPaperOrderStore) Get(ctx context.Context, requestID string) (paperOrder, error) {
+	payload, err := store.client.Get(ctx, "trading-engine:paper-order:"+requestID).Result()
+	if err != nil {
+		return paperOrder{}, err
+	}
+	var order paperOrder
+	if err := json.Unmarshal([]byte(payload), &order); err != nil {
+		return paperOrder{}, err
+	}
+	return order, nil
+}
+
 type memoryPaperOrderStore struct {
 	mu     sync.Mutex
 	orders map[string]paperOrder
@@ -118,13 +131,23 @@ func (store *memoryPaperOrderStore) Create(_ context.Context, order paperOrder) 
 	return order, true, nil
 }
 
+func (store *memoryPaperOrderStore) Get(_ context.Context, requestID string) (paperOrder, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	order, ok := store.orders[requestID]
+	if !ok {
+		return paperOrder{}, errors.New("paper order not found")
+	}
+	return order, nil
+}
+
 func evaluatePaperOrder(input paperOrderRequest, now time.Time) paperOrderResult {
 	input.RequestID = strings.TrimSpace(input.RequestID)
 	input.Mode = strings.ToUpper(strings.TrimSpace(input.Mode))
 	input.Pair = strings.ToUpper(strings.TrimSpace(input.Pair))
 	input.Strategy = strings.ToUpper(strings.TrimSpace(input.Strategy))
 	input.Direction = strings.ToUpper(strings.TrimSpace(input.Direction))
-	if input.RequestID == "" || input.Mode != "PAPER" || !paperPairs[input.Pair] ||
+	if !validPaperIdentifier(input.RequestID) || input.Mode != "PAPER" || !paperPairs[input.Pair] ||
 		!paperStrategies[input.Strategy] || (input.Direction != "BUY" && input.Direction != "SELL") ||
 		!finitePositive(input.Lots) || !finitePositive(input.Entry) || !finitePositive(input.StopLoss) ||
 		!finitePositive(input.TakeProfit) || (input.Strategy == "LONDON_BREAKOUT" && input.Pair == "USDJPY") {
@@ -157,6 +180,20 @@ func evaluatePaperOrder(input paperOrderRequest, now time.Time) paperOrderResult
 		QuoteTimestamp: quoteTime.UTC(), Status: "PAPER_ACCEPTED", CreatedAt: now.UTC(),
 	}
 	return paperOrderResult{Outcome: "PAPER_ACCEPTED", Order: &order}
+}
+
+func validPaperIdentifier(value string) bool {
+	if len(value) == 0 || len(value) > 100 {
+		return false
+	}
+	for _, character := range value {
+		if character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' ||
+			character >= '0' && character <= '9' || character == '-' || character == '_' || character == '.' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func finitePositive(value float64) bool {
