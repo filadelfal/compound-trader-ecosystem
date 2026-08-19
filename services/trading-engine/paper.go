@@ -22,10 +22,11 @@ const (
 
 var paperPairs = map[string]bool{"EURUSD": true, "GBPUSD": true, "USDJPY": true}
 var paperStrategies = map[string]bool{
-	"EMA_PULLBACK":          true,
-	"EMA_CROSSOVER":         true,
+	"EMA_PULLBACK":           true,
+	"EMA_CROSSOVER":          true,
 	"ADX_TREND_CONTINUATION": true,
-	"LONDON_BREAKOUT":       true,
+	"TREND_CONTINUATION":     true,
+	"LONDON_BREAKOUT":        true,
 }
 
 type paperOrderRequest struct {
