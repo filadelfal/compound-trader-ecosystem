@@ -40,6 +40,15 @@ timeframe, month, and in-sample/out-of-sample classification. Rejected
 `NO_TRADE` runs remain visible. Small samples and undefined ratios are reported
 explicitly and never converted into trading approval.
 
+Walk-forward validation consumes only fingerprint-verified backtest runs and
+valid performance evidence. It requires contiguous, chronological,
+non-overlapping training/test folds with isolated strategy, version, pair and
+timeframe identity. Configurable readiness gates evaluate out-of-sample sample
+size, fold profitability, expectancy, profit factor, drawdown, degradation and
+loss streaks. Every missing, undefined or failed gate returns `NOT_READY`.
+`READY` means paper-strategy evidence passed the configured historical gates;
+it never authorizes live trading or guarantees future results.
+
 ## Endpoints
 
 - `GET /health`
@@ -53,3 +62,4 @@ explicitly and never converted into trading approval.
 - `GET /api/v1/paper/journal?orderId=...`
 - `POST /api/v1/backtests`
 - `POST /api/v1/backtests/performance`
+- `POST /api/v1/backtests/walk-forward`
