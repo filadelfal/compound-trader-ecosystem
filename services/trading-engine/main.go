@@ -108,6 +108,7 @@ func main() {
 	mux.HandleFunc("/api/v1/paper/positions/quotes", app.paperQuoteHandler)
 	mux.HandleFunc("/api/v1/paper/journal", app.paperJournalHandler)
 	mux.HandleFunc("/api/v1/backtests", app.backtestHandler)
+	mux.HandleFunc("/api/v1/backtests/performance", app.performanceHandler)
 
     server := &http.Server{
         Addr:              "0.0.0.0:" + port,
