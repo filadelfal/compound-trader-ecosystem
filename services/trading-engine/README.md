@@ -24,6 +24,14 @@ calculates deterministic realized or unrealized P&L using the supplied
 account-currency pip value.
 Position snapshots are appended to a 30-day immutable paper journal.
 
+Deterministic backtests accept only closed chronological H1/H4 candles and
+explicit spread, slippage, and commission assumptions. Invalid, duplicate,
+unordered, gapped, or future data fails closed. Runs are isolated by pair,
+timeframe, strategy, and strategy version and include SHA-256 configuration,
+dataset, and result fingerprints. Same-candle stop/target ambiguity is resolved
+to the adverse stop-loss outcome. Backtest evidence is historical simulation,
+not a promise of future performance.
+
 ## Endpoints
 
 - `GET /health`
@@ -35,3 +43,4 @@ Position snapshots are appended to a 30-day immutable paper journal.
 - `POST /api/v1/paper/positions`
 - `POST /api/v1/paper/positions/quotes`
 - `GET /api/v1/paper/journal?orderId=...`
+- `POST /api/v1/backtests`
