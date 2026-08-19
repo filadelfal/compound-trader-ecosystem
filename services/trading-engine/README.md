@@ -49,6 +49,12 @@ loss streaks. Every missing, undefined or failed gate returns `NOT_READY`.
 `READY` means paper-strategy evidence passed the configured historical gates;
 it never authorizes live trading or guarantees future results.
 
+The paper-automation coordinator accepts only explicit `PAPER` requests. It
+requires one conflict-free setup, a fresh fingerprint-valid matching `READY`
+decision, current closed H1/H4 candles, a bounded-spread quote, and a fresh pass
+through every account risk gate. Accepted orders and positions use the existing
+paper stores and an immutable audit. No live-order interface exists.
+
 ## Endpoints
 
 - `GET /health`
@@ -63,3 +69,4 @@ it never authorizes live trading or guarantees future results.
 - `POST /api/v1/backtests`
 - `POST /api/v1/backtests/performance`
 - `POST /api/v1/backtests/walk-forward`
+- `POST /api/v1/paper-automation/evaluate`
