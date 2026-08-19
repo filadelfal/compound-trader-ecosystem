@@ -27,12 +27,12 @@ func lifecycleTestPosition(direction string) paperPosition {
 func TestApplyPaperQuoteMarksAndClosesBuy(t *testing.T) {
 	position := lifecycleTestPosition("BUY")
 	marked, eventType, err := applyPaperQuote(position, 1.1050, 1.1052, paperTestNow.Add(time.Second))
-	if err != nil || eventType != "POSITION_MARKED" || marked.Status != "OPEN" || marked.UnrealizedPnL != 5 {
+	if err != nil || eventType != "POSITION_MARKED" || marked.Status != "OPEN" || marked.UnrealizedPnL != 50 {
 		t.Fatalf("unexpected mark: position=%+v type=%s err=%v", marked, eventType, err)
 	}
 	closed, eventType, err := applyPaperQuote(marked, 1.1101, 1.1103, paperTestNow.Add(2*time.Second))
 	if err != nil || eventType != "POSITION_CLOSED_TAKE_PROFIT" || closed.Status != "CLOSED" ||
-		closed.CloseReason != "TAKE_PROFIT" || closed.ExitPrice != 1.1100 || closed.RealizedPnL != 10 {
+		closed.CloseReason != "TAKE_PROFIT" || closed.ExitPrice != 1.1100 || closed.RealizedPnL != 100 {
 		t.Fatalf("unexpected close: position=%+v type=%s err=%v", closed, eventType, err)
 	}
 }
@@ -40,7 +40,7 @@ func TestApplyPaperQuoteMarksAndClosesBuy(t *testing.T) {
 func TestApplyPaperQuoteUsesAskToStopSell(t *testing.T) {
 	position := lifecycleTestPosition("SELL")
 	closed, eventType, err := applyPaperQuote(position, 1.1049, 1.1051, paperTestNow.Add(time.Second))
-	if err != nil || eventType != "POSITION_CLOSED_STOP_LOSS" || closed.ExitPrice != 1.1050 || closed.RealizedPnL != -5 {
+	if err != nil || eventType != "POSITION_CLOSED_STOP_LOSS" || closed.ExitPrice != 1.1050 || closed.RealizedPnL != -50 {
 		t.Fatalf("unexpected close: position=%+v type=%s err=%v", closed, eventType, err)
 	}
 }
@@ -120,7 +120,7 @@ func TestPaperLifecycleHandlersOpenCloseAndExposeJournal(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", quoteRecorder.Code, quoteRecorder.Body.String())
 	}
 	var quoteResult paperLifecycleResult
-	if err := json.Unmarshal(quoteRecorder.Body.Bytes(), &quoteResult); err != nil || quoteResult.Outcome != "POSITION_CLOSED" || quoteResult.Position.RealizedPnL != 10 {
+	if err := json.Unmarshal(quoteRecorder.Body.Bytes(), &quoteResult); err != nil || quoteResult.Outcome != "POSITION_CLOSED" || quoteResult.Position.RealizedPnL != 100 {
 		t.Fatalf("unexpected close response: %s", quoteRecorder.Body.String())
 	}
 

@@ -170,7 +170,7 @@ func evaluatePaperOrder(input paperOrderRequest, now time.Time) paperOrderResult
 	if !validStructure {
 		return paperOrderResult{Outcome: "NO_TRADE", Reasons: []string{"INVALID_PRICE_STRUCTURE"}}
 	}
-	if reward/risk < 2 {
+	if reward/risk+1e-9 < 2 {
 		return paperOrderResult{Outcome: "NO_TRADE", Reasons: []string{"INSUFFICIENT_RISK_REWARD"}}
 	}
 	order := paperOrder{
