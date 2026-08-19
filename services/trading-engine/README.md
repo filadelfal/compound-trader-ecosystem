@@ -32,6 +32,14 @@ dataset, and result fingerprints. Same-candle stop/target ambiguity is resolved
 to the adverse stop-loss outcome. Backtest evidence is historical simulation,
 not a promise of future performance.
 
+Read-only performance evidence verifies the immutable run fingerprints before
+reporting trade count, wins, losses, breakeven trades, win rate, gross profit
+and loss, costs, net P&L, profit factor, averages, expectancy, drawdown,
+streaks, and return-to-drawdown. Evidence is grouped by pair, strategy version,
+timeframe, month, and in-sample/out-of-sample classification. Rejected
+`NO_TRADE` runs remain visible. Small samples and undefined ratios are reported
+explicitly and never converted into trading approval.
+
 ## Endpoints
 
 - `GET /health`
@@ -44,3 +52,4 @@ not a promise of future performance.
 - `POST /api/v1/paper/positions/quotes`
 - `GET /api/v1/paper/journal?orderId=...`
 - `POST /api/v1/backtests`
+- `POST /api/v1/backtests/performance`
