@@ -28,6 +28,10 @@ type application struct {
 	automationMu         *sync.Mutex
 	automationFinalState func(paperAutomationRequest) positionSizeRequest
 	automationAcceptanceGate func(context.Context, paperAutomationRequest) string
+	operationsAcceptanceGate func(context.Context, paperAutomationRequest) string
+	operationsPaperGate func(context.Context) string
+	operationsRecordAccepted func(context.Context, paperAutomationRequest, automationSetup, paperOrder, paperPosition) error
+	operationsRecordCycle func(context.Context, cycleRecord) error
 	now                  func() time.Time
 }
 
@@ -105,6 +109,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("paper automation runtime startup failed: %v", err)
 	}
+	operationsStore := redisPaperOperationsStore{client: cache, retention: operationsRetention}
+	operations := newPaperOperations(operationsStore, app.currentTime, func(evidenceCtx context.Context) (operationsEvidence, error) {
+		return collectRedisOperationsEvidence(evidenceCtx, app, operationsStore, 10000)
+	})
+	app.operationsAcceptanceGate = operations.acceptanceGate
+	app.operationsPaperGate = func(gateCtx context.Context) string { return operations.acceptanceGate(gateCtx, paperAutomationRequest{}) }
+	app.operationsRecordAccepted = operations.recordAccepted
+	app.operationsRecordCycle = operations.recordCycle
+	startupCtx, startupCancel := context.WithTimeout(ctx, 15*time.Second)
+	if _, _, err := operations.reconcile(startupCtx, "startup"); err != nil {
+		log.Printf("paper operations startup reconciliation failed closed: %v", err)
+	}
+	startupCancel()
+	operations.Start(ctx, 5*time.Minute)
 	runtime.Start(ctx)
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
@@ -125,6 +143,11 @@ func main() {
 			jsonResponse(w, http.StatusServiceUnavailable, map[string]any{"ready": false, "dependency": "paper-automation-runtime", "state": runtimeState.State, "reasons": runtimeState.Reasons})
 			return
 		}
+		operationsState := operations.status()
+		if ready, _ := operationsState["ready"].(bool); !ready {
+			jsonResponse(w, http.StatusServiceUnavailable, map[string]any{"ready": false, "dependency": "paper-operations", "state": operationsState})
+			return
+		}
 		jsonResponse(w, http.StatusOK, map[string]any{"ready": true, "service": app.service})
 	})
 	mux.HandleFunc("/api/v1/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -141,6 +164,10 @@ func main() {
 	mux.HandleFunc("/api/v1/paper-automation/evaluate", app.paperAutomationHandler)
 	mux.HandleFunc("/api/v1/paper-automation/runtime", runtime.statusHandler)
 	mux.HandleFunc("/api/v1/paper-automation/runtime/cycles", runtime.cyclesHandler)
+	mux.HandleFunc("/api/v1/paper-operations/status", operations.statusHandler)
+	mux.HandleFunc("/api/v1/paper-operations/findings", operations.findingsHandler)
+	mux.HandleFunc("/api/v1/paper-operations/ledger", operations.ledgerHandler)
+	mux.HandleFunc("/api/v1/paper-operations/rollup", operations.rollupHandler)
 
 	server := &http.Server{
 		Addr:              "0.0.0.0:" + port,
@@ -167,6 +194,7 @@ func main() {
 	if err := runtime.Stop(shutdownCtx); err != nil {
 		log.Printf("paper automation runtime shutdown failed: %v", err)
 	}
+	operations.Stop()
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Printf("graceful shutdown failed: %v", err)
 	}

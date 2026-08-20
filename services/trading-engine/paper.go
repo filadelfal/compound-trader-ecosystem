@@ -88,6 +88,9 @@ func (store redisPaperOrderStore) Create(ctx context.Context, order paperOrder) 
 		return paperOrder{}, false, err
 	}
 	if created {
+		if err := store.client.ZAdd(ctx, "trading-engine:paper-order-index", redis.Z{Score: float64(order.CreatedAt.Unix()), Member: order.RequestID}).Err(); err != nil {
+			return paperOrder{}, false, err
+		}
 		return order, true, nil
 	}
 	existingJSON, err := store.client.Get(ctx, key).Result()
@@ -96,6 +99,9 @@ func (store redisPaperOrderStore) Create(ctx context.Context, order paperOrder) 
 	}
 	var existing paperOrder
 	if err := json.Unmarshal([]byte(existingJSON), &existing); err != nil {
+		return paperOrder{}, false, err
+	}
+	if err := store.client.ZAdd(ctx, "trading-engine:paper-order-index", redis.Z{Score: float64(existing.CreatedAt.Unix()), Member: existing.RequestID}).Err(); err != nil {
 		return paperOrder{}, false, err
 	}
 	return existing, false, nil
@@ -239,6 +245,12 @@ func (app *application) paperOrderHandler(w http.ResponseWriter, r *http.Request
 	if app.paperStore == nil {
 		writePaperResult(w, http.StatusServiceUnavailable, paperOrderResult{Outcome: "NO_TRADE", Reasons: []string{"PAPER_STORE_UNAVAILABLE"}})
 		return
+	}
+	if app.operationsPaperGate != nil {
+		if reason := app.operationsPaperGate(r.Context()); reason != "" {
+			writePaperResult(w, http.StatusServiceUnavailable, paperOrderResult{Outcome: "NO_TRADE", Reasons: []string{reason}})
+			return
+		}
 	}
 	proposed := *result.Order
 	stored, created, err := app.paperStore.Create(r.Context(), proposed)

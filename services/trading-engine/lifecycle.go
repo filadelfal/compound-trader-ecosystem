@@ -199,11 +199,15 @@ func (store redisPaperLifecycleStore) Open(ctx context.Context, eventID string, 
 			pipe.Set(ctx, eventKey, eventRecordJSON, store.retention)
 			pipe.RPush(ctx, store.journalKey(position.OrderID), eventJSON)
 			pipe.Expire(ctx, store.journalKey(position.OrderID), store.retention)
+			pipe.ZAdd(ctx, "trading-engine:paper-position-index", redis.Z{Score: float64(position.OpenedAt.Unix()), Member: position.OrderID})
 			return nil
 		})
 		result = position
 		return pipeErr
 	}, positionKey, eventKey)
+	if err == nil {
+		err = store.client.ZAdd(ctx, "trading-engine:paper-position-index", redis.Z{Score: float64(result.OpenedAt.Unix()), Member: result.OrderID}).Err()
+	}
 	return
 }
 
@@ -252,12 +256,15 @@ func (store redisPaperLifecycleStore) ApplyQuote(ctx context.Context, eventID, o
 }
 
 func (store redisPaperLifecycleStore) Journal(ctx context.Context, orderID string) ([]paperJournalEvent, error) {
-	items, err := store.client.LRange(ctx, store.journalKey(orderID), 0, -1).Result()
+	items, err := store.client.LRange(ctx, store.journalKey(orderID), 0, 1000).Result()
 	if err != nil {
 		return nil, err
 	}
 	if len(items) == 0 {
 		return nil, errPaperPositionNotFound
+	}
+	if len(items) > 1000 {
+		return nil, errors.New("paper journal reconciliation bound exceeded")
 	}
 	events := make([]paperJournalEvent, 0, len(items))
 	for _, item := range items {
@@ -369,6 +376,12 @@ func (app *application) openPaperPositionHandler(w http.ResponseWriter, r *http.
 	if app.paperStore == nil || app.lifecycleStore == nil {
 		writeLifecycleResult(w, http.StatusServiceUnavailable, paperLifecycleResult{Outcome: "NO_TRADE", Reasons: []string{"PAPER_STORE_UNAVAILABLE"}})
 		return
+	}
+	if app.operationsPaperGate != nil {
+		if reason := app.operationsPaperGate(r.Context()); reason != "" {
+			writeLifecycleResult(w, http.StatusServiceUnavailable, paperLifecycleResult{Outcome: "NO_TRADE", Reasons: []string{reason}})
+			return
+		}
 	}
 	order, err := app.paperStore.Get(r.Context(), strings.TrimSpace(input.RequestID))
 	if err != nil || order.Status != "PAPER_ACCEPTED" {
