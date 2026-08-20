@@ -27,6 +27,7 @@ type application struct {
 	automationStore      paperAutomationStore
 	automationMu         *sync.Mutex
 	automationFinalState func(paperAutomationRequest) positionSizeRequest
+	automationAcceptanceGate func(context.Context, paperAutomationRequest) string
 	now                  func() time.Time
 }
 

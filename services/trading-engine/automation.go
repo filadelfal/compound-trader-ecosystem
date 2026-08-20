@@ -469,6 +469,12 @@ func (app *application) evaluatePaperAutomation(ctx context.Context, input paper
 		return fail("RISK_REJECTED", &setup, positionSizeResult{Outcome: "NO_TRADE", Reasons: []string{"STATE_CHANGED"}})
 	}
 	pass("FINAL_STATE_UNCHANGED")
+	if app.automationAcceptanceGate != nil {
+		if reason := app.automationAcceptanceGate(ctx, input); reason != "" {
+			return fail(reason, &setup, finalRisk)
+		}
+		pass("RUNTIME_FENCE_VERIFIED")
+	}
 	orderResult := evaluatePaperOrder(paperOrderRequest{RequestID: input.RequestID, Mode: "PAPER", Pair: setup.Pair,
 		Strategy: setup.Strategy, Direction: setup.Direction, Lots: risk.Lots, Entry: setup.Entry, StopLoss: setup.StopLoss,
 		TakeProfit: setup.TakeProfit, QuoteTimestamp: quoteAt.Format(time.RFC3339Nano), RiskApproved: true}, now)
