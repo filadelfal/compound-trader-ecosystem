@@ -44,6 +44,8 @@ fields because strict JSON decoding would correctly reject them.
 - Pre-order fencing verification inside the Milestone D coordinator.
 - Fencing verification immediately after Milestone D evaluation.
 - Bounded retry and cycle timeout.
+- Deterministic bounded retry jitter and permanent/transient failure separation.
+- Per-cycle append-only Redis transition history with retained current state.
 - Bounded-cardinality Prometheus event, queue, leader, and duration metrics.
 - Read-only runtime status and recent-cycle endpoints.
 - Runtime readiness separated from process liveness.
@@ -54,16 +56,12 @@ fields because strict JSON decoding would correctly reject them.
 The following remain blockers before Milestone E can be considered complete or
 published:
 
-- Cycle snapshots are appended to the bounded recent-event list but a dedicated
-  durable, immutable audit stream remains an operational follow-up.
-- Deterministic retry jitter is not added; bounded exponential backoff is used.
-- Exact next-boundary timers use bounded lease-renewal scheduling rather than a
-  separate timer per pair/timeframe.
 - Authenticated and audited pause/resume is intentionally absent because no
   suitable operational authorization boundary has been established.
-- London Breakout session eligibility remains owned by the strategy-engine
-  contract (08:00-10:59 UTC entry candles); the runtime never fabricates or
-  overrides a Strategy Manager decision.
+- London Breakout session eligibility remains defined by the strategy-engine
+  contract (08:00-10:59 UTC entry candles). Runtime request acceptance also
+  rejects closed-candle cycles outside the corresponding 09:00-11:00 UTC close
+  boundaries with permanent `OUTSIDE_SESSION`.
 
 Authoritative Docker validation (`go build -o /tmp/trading-engine ./`, tests,
 race tests, and vet) is required after this repair. Do not publish or merge this
