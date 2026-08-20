@@ -29,8 +29,24 @@ func(s *memoryRuntimeStore)Save(_ context.Context,r cycleRecord)error{s.mu.Lock(
 func(s *memoryRuntimeStore)Recent(_ context.Context,n int)([]cycleRecord,error){s.mu.Lock();defer s.mu.Unlock();out:=[]cycleRecord{};for _,r:=range s.records{out=append(out,r);if len(out)==n{break}};return out,nil}
 func(s *memoryRuntimeStore)Healthy(context.Context)error{if s.fail{return errors.New("unavailable")};return nil}
 
-type fixedRuntimeProvider struct{ request paperAutomationRequest; err error }
-func(p fixedRuntimeProvider)Request(_ context.Context,c runtimeCycle)(paperAutomationRequest,error){v:=p.request;v.RequestID=c.ID;v.StrategyManager.RequestID=c.ID;v.StrategyManager.Pair=c.Pair;v.StrategyManager.Setups[0].Pair=c.Pair;v.StrategyManager.Setups[0].Timeframe=c.Timeframe;v.StrategyManager.Setups[0].Fingerprint=setupFingerprint(v.StrategyManager.Setups[0]);v.Readiness.Decision=validAutomationDecision(v.StrategyManager.Setups[0]);return v,p.err}
+type fixedRuntimeProvider struct{ request paperAutomationRequest; now func() time.Time; staleQuote bool; err error }
+func(p fixedRuntimeProvider)Request(_ context.Context,c runtimeCycle)(paperAutomationRequest,error){
+	v:=p.request
+	now:=p.now().UTC()
+	v.RequestID=c.ID
+	v.StrategyManager.RequestID=c.ID
+	v.StrategyManager.Pair=c.Pair
+	v.StrategyManager.Setups[0].Pair=c.Pair
+	v.StrategyManager.Setups[0].Timeframe=c.Timeframe
+	v.StrategyManager.Setups[0].Fingerprint=setupFingerprint(v.StrategyManager.Setups[0])
+	v.Readiness.Decision=validAutomationDecision(v.StrategyManager.Setups[0])
+	v.Readiness.DecidedAt=now.Add(-time.Hour).Format(time.RFC3339Nano)
+	v.Quote.Timestamp=now.Add(-time.Second).Format(time.RFC3339Nano)
+	if p.staleQuote { v.Quote.Timestamp=now.Add(-time.Duration(v.Freshness.QuoteMaxAgeSeconds+1)*time.Second).Format(time.RFC3339Nano) }
+	v.Candles.H1=[]automationCandle{automationCandleAt(now.Add(-2*time.Hour)),automationCandleAt(now.Add(-time.Hour))}
+	v.Candles.H4=[]automationCandle{automationCandleAt(now.Add(-8*time.Hour)),automationCandleAt(now.Add(-4*time.Hour))}
+	return v,p.err
+}
 
 func TestRuntimeDisabledAndConfigurationFailClosed(t *testing.T){
 	c,e:=parseRuntimeConfig(func(string)string{return ""});if e!=nil||c.Enabled{t.Fatalf("default must be disabled: %+v %v",c,e)}
@@ -54,10 +70,17 @@ func TestRuntimeTwoReplicasAndStaleLeader(t *testing.T){
 }
 
 func TestRuntimeEndToEndUsesMilestoneDAndIsIdempotent(t *testing.T){
-	app,_:=automationApp();cfg:=defaultRuntimeConfig();cfg.Enabled=true;store:=newMemoryRuntimeStore();runtime,e:=newPaperRuntime(cfg,app,store,fixedRuntimeProvider{request:validAutomationRequest("placeholder")});if e!=nil{t.Fatal(e)}
+	app,_:=automationApp();cfg:=defaultRuntimeConfig();cfg.Enabled=true;store:=newMemoryRuntimeStore();runtime,e:=newPaperRuntime(cfg,app,store,fixedRuntimeProvider{request:validAutomationRequest("placeholder"),now:app.currentTime});if e!=nil{t.Fatal(e)}
+	if !runtime.now().Equal(automationNow) { t.Fatalf("runtime clock is not coordinator clock: %s",runtime.now()) }
 	f,ok,_:=store.AcquireLeader(context.Background(),runtime.owner,time.Minute);if !ok{t.Fatal("leader")};runtime.mu.Lock();runtime.status.Leader=true;runtime.status.Fence=f;runtime.status.State="leader";runtime.mu.Unlock()
 	cycle:=newRuntimeCycle("EURUSD","H1",automationNow,"strategy-set-v1",cfg.fingerprint());runtime.runCycle(context.Background(),cycle);record,e:=store.Load(context.Background(),cycle.ID);if e!=nil||record.State!="COMPLETED"||record.Outcome!="PAPER_ACCEPTED"{t.Fatalf("unexpected cycle: %+v %v",record,e)}
 	runtime.runCycle(context.Background(),cycle);if len(store.records)!=1{t.Fatal("completed cycle replayed")}
+}
+
+func TestRuntimeFixedClockRejectsStaleMarketData(t *testing.T){
+	app,_:=automationApp();cfg:=defaultRuntimeConfig();cfg.Enabled=true;store:=newMemoryRuntimeStore();runtime,e:=newPaperRuntime(cfg,app,store,fixedRuntimeProvider{request:validAutomationRequest("placeholder"),now:app.currentTime,staleQuote:true});if e!=nil{t.Fatal(e)}
+	f,ok,_:=store.AcquireLeader(context.Background(),runtime.owner,time.Minute);if !ok{t.Fatal("leader")};runtime.mu.Lock();runtime.status.Leader=true;runtime.status.Fence=f;runtime.status.State="leader";runtime.mu.Unlock()
+	cycle:=newRuntimeCycle("EURUSD","H1",automationNow,"strategy-set-v1",cfg.fingerprint());runtime.runCycle(context.Background(),cycle);record,e:=store.Load(context.Background(),cycle.ID);if e!=nil||record.State!="NO_TRADE"||record.Outcome!="NO_TRADE"||len(record.Reasons)!=1||record.Reasons[0]!="STALE_QUOTE"{t.Fatalf("stale market data did not fail closed: %+v %v",record,e)}
 }
 
 func TestRuntimeStatusEndpointsAreReadOnly(t *testing.T){
