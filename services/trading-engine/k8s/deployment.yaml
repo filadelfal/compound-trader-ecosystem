@@ -26,6 +26,10 @@ spec:
               value: "3003"
             - name: SERVICE_NAME
               value: "trading-engine"
+            - name: PAPER_AUTOMATION_ENABLED
+              value: "false"
+            - name: PAPER_AUTOMATION_MODE
+              value: "PAPER"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:

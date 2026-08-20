@@ -92,6 +92,19 @@ func main() {
 		},
 		now: time.Now,
 	}
+	runtimeConfig, err := envRuntimeConfig()
+	if err != nil {
+		log.Fatalf("paper automation runtime configuration failed: %v", err)
+	}
+	runtimeProvider, err := envRuntimeProvider(runtimeConfig)
+	if err != nil {
+		log.Fatalf("paper automation runtime provider failed: %v", err)
+	}
+	runtime, err := newPaperRuntime(runtimeConfig, app, redisRuntimeStore{client: cache, prefix: "trading-engine:paper-runtime:"}, runtimeProvider)
+	if err != nil {
+		log.Fatalf("paper automation runtime startup failed: %v", err)
+	}
+	runtime.Start(ctx)
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +117,11 @@ func main() {
 		}
 		if err := app.cache.Ping(r.Context()).Err(); err != nil {
 			jsonResponse(w, http.StatusServiceUnavailable, map[string]any{"ready": false, "dependency": "redis"})
+			return
+		}
+		runtimeState := runtime.Status()
+		if runtimeState.Enabled && !runtimeState.Ready {
+			jsonResponse(w, http.StatusServiceUnavailable, map[string]any{"ready": false, "dependency": "paper-automation-runtime", "state": runtimeState.State, "reasons": runtimeState.Reasons})
 			return
 		}
 		jsonResponse(w, http.StatusOK, map[string]any{"ready": true, "service": app.service})
@@ -120,6 +138,8 @@ func main() {
 	mux.HandleFunc("/api/v1/backtests/performance", app.performanceHandler)
 	mux.HandleFunc("/api/v1/backtests/walk-forward", app.walkForwardHandler)
 	mux.HandleFunc("/api/v1/paper-automation/evaluate", app.paperAutomationHandler)
+	mux.HandleFunc("/api/v1/paper-automation/runtime", runtime.statusHandler)
+	mux.HandleFunc("/api/v1/paper-automation/runtime/cycles", runtime.cyclesHandler)
 
 	server := &http.Server{
 		Addr:              "0.0.0.0:" + port,
@@ -143,6 +163,9 @@ func main() {
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	if err := runtime.Stop(shutdownCtx); err != nil {
+		log.Printf("paper automation runtime shutdown failed: %v", err)
+	}
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Printf("graceful shutdown failed: %v", err)
 	}

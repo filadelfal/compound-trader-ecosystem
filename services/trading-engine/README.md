@@ -70,3 +70,35 @@ paper stores and an immutable audit. No live-order interface exists.
 - `POST /api/v1/backtests/performance`
 - `POST /api/v1/backtests/walk-forward`
 - `POST /api/v1/paper-automation/evaluate`
+
+## Resilient PAPER automation runtime
+
+The background runtime is disabled by default and can only run in `PAPER` mode.
+It schedules UTC-aligned, fully closed H1/H4 candles after a settlement delay,
+then obtains a complete fingerprinted request and passes it to the Milestone D
+coordinator. It does not construct orders or positions and exposes no broker or
+live-execution interface.
+
+Redis provides renewable single-leader leasing, monotonically increasing
+fencing tokens, and deterministic per-cycle locks. The worker queue and worker
+count are bounded. Lease, lock, request-provider, storage, stale-state, and
+configuration uncertainty fail closed. Read-only operational endpoints are:
+
+- `GET /api/v1/paper-automation/runtime`
+- `GET /api/v1/paper-automation/runtime/cycles`
+
+The runtime is enabled only when `PAPER_AUTOMATION_ENABLED=true`,
+`PAPER_AUTOMATION_MODE=PAPER`, and `PAPER_AUTOMATION_REQUEST_URL` points to the
+internal service that assembles the complete Milestone D request. Invalid
+provider identity is rejected.
+
+Optional conservative settings include `PAPER_AUTOMATION_PAIRS`,
+`PAPER_AUTOMATION_TIMEFRAMES`, `PAPER_AUTOMATION_SETTLEMENT_DELAY`,
+`PAPER_AUTOMATION_READINESS_MAX_AGE`, `PAPER_AUTOMATION_RECOVERY_WINDOW`,
+`PAPER_AUTOMATION_WORKERS`, `PAPER_AUTOMATION_QUEUE_CAPACITY`,
+`PAPER_AUTOMATION_CYCLE_TIMEOUT`, `PAPER_AUTOMATION_MAX_RETRIES`,
+`PAPER_AUTOMATION_INITIAL_RETRY_DELAY`, `PAPER_AUTOMATION_MAX_RETRY_DELAY`,
+`PAPER_AUTOMATION_LEADER_LEASE`, `PAPER_AUTOMATION_LEADER_RENEWAL`, and
+`PAPER_AUTOMATION_CLOCK_SKEW`. Invalid values prevent startup.
+
+Historical readiness and PAPER results do not guarantee future performance.

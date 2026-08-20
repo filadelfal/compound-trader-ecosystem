@@ -5,6 +5,10 @@ image:
   pullPolicy: IfNotPresent
 service:
   port: 3003
+paperAutomation:
+  enabled: false
+  mode: PAPER
+  requestUrl: ""
 resources:
   requests:
     cpu: 100m

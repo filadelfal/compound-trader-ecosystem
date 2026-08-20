@@ -21,5 +21,13 @@ spec:
           env:
             - name: PORT
               value: "{{ .Values.service.port }}"
+            - name: PAPER_AUTOMATION_ENABLED
+              value: "{{ .Values.paperAutomation.enabled }}"
+            - name: PAPER_AUTOMATION_MODE
+              value: "{{ .Values.paperAutomation.mode }}"
+            {{- if .Values.paperAutomation.enabled }}
+            - name: PAPER_AUTOMATION_REQUEST_URL
+              value: "{{ required "paperAutomation.requestUrl is required when enabled" .Values.paperAutomation.requestUrl }}"
+            {{- end }}
           resources:
 {{ toYaml .Values.resources | nindent 12 }}
