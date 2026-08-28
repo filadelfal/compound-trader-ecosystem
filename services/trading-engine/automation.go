@@ -475,6 +475,12 @@ func (app *application) evaluatePaperAutomation(ctx context.Context, input paper
 		}
 		pass("RUNTIME_FENCE_VERIFIED")
 	}
+	if app.operationsAcceptanceGate != nil {
+		if reason := app.operationsAcceptanceGate(ctx, input); reason != "" {
+			return fail(reason, &setup, finalRisk)
+		}
+		pass("OPERATIONS_RECONCILIATION_VERIFIED")
+	}
 	orderResult := evaluatePaperOrder(paperOrderRequest{RequestID: input.RequestID, Mode: "PAPER", Pair: setup.Pair,
 		Strategy: setup.Strategy, Direction: setup.Direction, Lots: risk.Lots, Entry: setup.Entry, StopLoss: setup.StopLoss,
 		TakeProfit: setup.TakeProfit, QuoteTimestamp: quoteAt.Format(time.RFC3339Nano), RiskApproved: true}, now)
@@ -493,6 +499,11 @@ func (app *application) evaluatePaperAutomation(ctx context.Context, input paper
 	storedPosition, _, err := app.lifecycleStore.Open(ctx, eventID, position, event)
 	if err != nil {
 		return fail("STORAGE_UNAVAILABLE", &setup, risk)
+	}
+	if app.operationsRecordAccepted != nil {
+		if err := app.operationsRecordAccepted(ctx, input, setup, order, storedPosition); err != nil {
+			return fail("STORAGE_UNAVAILABLE", &setup, risk)
+		}
 	}
 	pass("PAPER_POSITION_OPENED")
 	audit := newAutomationAudit(input, requestFP, &setup, risk, gates, "PAPER_ACCEPTED", nil, now)
