@@ -1,0 +1,38 @@
+groups:
+  - name: market-data-paper-feed
+    rules:
+      - alert: PaperMarketDataFeedNotReady
+        expr: market_data_feed_ready == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PAPER market-data feed is not ready"
+          description: "The PAPER feed is stale, degraded, stopped, or its circuit is open."
+
+      - alert: PaperMarketDataFeedBackpressure
+        expr: increase(market_data_feed_backpressure_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PAPER market-data feed hit bounded-queue backpressure"
+          description: "Feed input exceeded the configured queue capacity; readiness should be treated fail-closed."
+
+      - alert: PaperMarketDataProviderFailures
+        expr: increase(market_data_feed_ingest_failure_total{reason=~"provider_timeout|provider_failure|provider_circuit_open"}[5m]) > 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PAPER market-data provider is unhealthy"
+          description: "Timeouts, provider failures, or an open circuit are preventing reliable PAPER data ingestion."
+
+      - alert: PaperMarketDataCircuitOpen
+        expr: market_data_feed_circuit_open == 1
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "PAPER market-data circuit breaker is open"
+          description: "Provider requests are temporarily blocked after repeated failures."

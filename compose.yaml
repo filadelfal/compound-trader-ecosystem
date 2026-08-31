@@ -701,7 +701,8 @@
                                                   ],
                                         "volumes":  [
                                                         "./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro",
-                                                        "./observability/operator-security-alerts.yml:/etc/prometheus/operator-security-alerts.yml:ro"
+                                                        "./observability/operator-security-alerts.yml:/etc/prometheus/operator-security-alerts.yml:ro",
+                                                        "./observability/market-data-alerts.yml:/etc/prometheus/market-data-alerts.yml:ro"
                                                     ],
                                         "restart":  "unless-stopped",
                                         "networks":  [
