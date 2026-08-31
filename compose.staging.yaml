@@ -39,6 +39,32 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
+      market-data: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    logging:
+      options: {max-size: "10m", max-file: "3"}
+
+  market-data:
+    ports: !reset []
+    environment:
+      NODE_ENV: production
+      MARKET_DATA_FEED_MODE: "fixture"
+      MARKET_DATA_FEED_REQUIRED: "true"
+      MARKET_DATA_FEED_FRESHNESS_SECONDS: "15"
+      MARKET_DATA_FEED_INTERVAL_MS: "1000"
+      MARKET_DATA_FEED_QUEUE_CAPACITY: "64"
+      MARKET_DATA_FEED_REQUEST_TIMEOUT_MS: "2000"
+      MARKET_DATA_FEED_MAX_RETRIES: "3"
+      MARKET_DATA_FEED_BACKOFF_BASE_MS: "100"
+      MARKET_DATA_FEED_BACKOFF_MAX_MS: "5000"
+      MARKET_DATA_FEED_CIRCUIT_FAILURES: "5"
+      MARKET_DATA_FEED_CIRCUIT_COOLDOWN_MS: "10000"
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
