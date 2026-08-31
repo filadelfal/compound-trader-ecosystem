@@ -1,0 +1,34 @@
+groups:
+  - name: paper-operator-security
+    rules:
+      - alert: OperatorSecurityUnavailable
+        expr: paper_operator_security_ready == 0
+        for: 2m
+        labels: {severity: critical, service: trading-engine}
+        annotations: {summary: "PAPER operator authentication or replay protection is unavailable"}
+      - alert: RepeatedInvalidOperatorAssertions
+        expr: sum(increase(paper_operator_security_events_total{event="authentication_rejected",reason="INVALID_SIGNATURE"}[10m])) >= 5
+        labels: {severity: warning, service: trading-engine}
+        annotations: {summary: "Repeated invalid operator assertion signatures"}
+      - alert: OperatorAssertionReplayAttempts
+        expr: sum(increase(paper_operator_security_events_total{event="authentication_rejected",reason="REPLAY_ATTEMPT"}[10m])) > 0
+        labels: {severity: critical, service: trading-engine}
+        annotations: {summary: "Operator assertion replay detected"}
+      - alert: RepeatedOperatorAuthorizationDenials
+        expr: sum(increase(paper_operator_security_events_total{event="authorization_denied"}[10m])) >= 5
+        labels: {severity: warning, service: trading-engine}
+        annotations: {summary: "Repeated PAPER operator authorization denials"}
+      - alert: OperatorEndpointAbuse
+        expr: sum(increase(paper_operator_security_events_total{event="rate_limited"}[10m])) > 0
+        labels: {severity: warning, service: trading-engine}
+        annotations: {summary: "PAPER operator administrative rate limit reached"}
+      - alert: PaperKillSwitchActive
+        expr: paper_operations_ready == 0
+        for: 5m
+        labels: {severity: critical, service: trading-engine}
+        annotations: {summary: "PAPER operations are not ready; inspect kill switch and reconciliation"}
+      - alert: PaperRuntimeNotReady
+        expr: max(paper_automation_runtime_leader) == 0
+        for: 5m
+        labels: {severity: warning, service: trading-engine}
+        annotations: {summary: "PAPER automation runtime is not ready"}

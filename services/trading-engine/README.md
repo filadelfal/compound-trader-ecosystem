@@ -38,6 +38,8 @@ and loss, costs, net P&L, profit factor, averages, expectancy, drawdown,
 streaks, and return-to-drawdown. Evidence is grouped by pair, strategy version,
 timeframe, month, and in-sample/out-of-sample classification. Rejected
 `NO_TRADE` runs remain visible. Small samples and undefined ratios are reported
+
+Sensitive PAPER operations and runtime evidence require a verified gateway operator assertion. Administrative commands are permission-scoped, replay-protected, idempotent, rate-limited, and immutably audited. `/health` is process liveness; `/ready` additionally requires authentication and replay protection. No operator command grants live execution authority.
 explicitly and never converted into trading approval.
 
 Walk-forward validation consumes only fingerprint-verified backtest runs and

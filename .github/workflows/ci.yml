@@ -72,6 +72,7 @@ jobs:
           POSTGRES_PASSWORD: ci-staging-postgres-password
           JWT_ACCESS_SECRET: ci-staging-access-secret-0123456789abcdef
           JWT_REFRESH_SECRET: ci-staging-refresh-secret-0123456789abcdef
+          OPERATOR_ASSERTION_SECRET: ci-staging-operator-secret-0123456789abcdef-ci-staging-operator-secret
         run: |
           docker compose -f compose.yaml -f compose.staging.yaml config --quiet
           staging_config="$RUNNER_TEMP/staging-compose.yaml"

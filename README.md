@@ -2,6 +2,8 @@
 
 Milestone F adds a fail-closed, PAPER-only operations and reconciliation control plane. See [MILESTONE_F_AUDIT.md](MILESTONE_F_AUDIT.md) for its safety model, read-only surface, retention bounds, authentication blocker, and required external validation.
 
+Milestone G adds a cryptographically verified, replay-protected operator boundary and safe local staging configuration. See [MILESTONE_G_AUDIT.md](MILESTONE_G_AUDIT.md). It remains PAPER-only and introduces no broker or live execution capability.
+
 This repository contains 25 runnable service foundations with Docker, tests,
 health checks, readiness checks, metrics, PostgreSQL/Redis integration,
 migrations, Kubernetes manifests, Helm charts, and CI.
