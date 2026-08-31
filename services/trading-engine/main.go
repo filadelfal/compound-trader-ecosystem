@@ -19,20 +19,20 @@ import (
 )
 
 type application struct {
-	service              string
-	db                   *pgxpool.Pool
-	cache                *redis.Client
-	paperStore           paperOrderStore
-	lifecycleStore       paperLifecycleStore
-	automationStore      paperAutomationStore
-	automationMu         *sync.Mutex
-	automationFinalState func(paperAutomationRequest) positionSizeRequest
+	service                  string
+	db                       *pgxpool.Pool
+	cache                    *redis.Client
+	paperStore               paperOrderStore
+	lifecycleStore           paperLifecycleStore
+	automationStore          paperAutomationStore
+	automationMu             *sync.Mutex
+	automationFinalState     func(paperAutomationRequest) positionSizeRequest
 	automationAcceptanceGate func(context.Context, paperAutomationRequest) string
 	operationsAcceptanceGate func(context.Context, paperAutomationRequest) string
-	operationsPaperGate func(context.Context) string
+	operationsPaperGate      func(context.Context) string
 	operationsRecordAccepted func(context.Context, paperAutomationRequest, automationSetup, paperOrder, paperPosition) error
-	operationsRecordCycle func(context.Context, cycleRecord) error
-	now                  func() time.Time
+	operationsRecordCycle    func(context.Context, cycleRecord) error
+	now                      func() time.Time
 }
 
 func jsonResponse(w http.ResponseWriter, status int, body map[string]any) {
@@ -113,8 +113,16 @@ func main() {
 	operations := newPaperOperations(operationsStore, app.currentTime, func(evidenceCtx context.Context) (operationsEvidence, error) {
 		return collectRedisOperationsEvidence(evidenceCtx, app, operationsStore, 10000)
 	})
+	securityConfig, err := envOperatorSecurityConfig()
+	if err != nil {
+		log.Fatalf("operator security configuration failed")
+	}
+	operatorAuth := &operatorAuthorizer{cfg: securityConfig, replay: redisOperatorReplayStore{client: cache}, now: app.currentTime}
+	operatorAPI := &operatorAPI{auth: operatorAuth, operations: operations, limiter: redisOperatorRateLimiter{client: cache}, commands: redisOperatorCommandStore{client: cache, retention: operationsRetention}}
 	app.operationsAcceptanceGate = operations.acceptanceGate
-	app.operationsPaperGate = func(gateCtx context.Context) string { return operations.acceptanceGate(gateCtx, paperAutomationRequest{}) }
+	app.operationsPaperGate = func(gateCtx context.Context) string {
+		return operations.acceptanceGate(gateCtx, paperAutomationRequest{})
+	}
 	app.operationsRecordAccepted = operations.recordAccepted
 	app.operationsRecordCycle = operations.recordCycle
 	startupCtx, startupCancel := context.WithTimeout(ctx, 15*time.Second)
@@ -138,6 +146,12 @@ func main() {
 			jsonResponse(w, http.StatusServiceUnavailable, map[string]any{"ready": false, "dependency": "redis"})
 			return
 		}
+		if ok, reason := operatorAuth.readiness(r.Context()); !ok {
+			operatorSecurityReady.Set(0)
+			jsonResponse(w, http.StatusServiceUnavailable, map[string]any{"ready": false, "dependency": "operator-security", "reason": reason})
+			return
+		}
+		operatorSecurityReady.Set(1)
 		runtimeState := runtime.Status()
 		if runtimeState.Enabled && !runtimeState.Ready {
 			jsonResponse(w, http.StatusServiceUnavailable, map[string]any{"ready": false, "dependency": "paper-automation-runtime", "state": runtimeState.State, "reasons": runtimeState.Reasons})
@@ -157,17 +171,24 @@ func main() {
 	mux.HandleFunc("/api/v1/paper/orders", app.paperOrderHandler)
 	mux.HandleFunc("/api/v1/paper/positions", app.openPaperPositionHandler)
 	mux.HandleFunc("/api/v1/paper/positions/quotes", app.paperQuoteHandler)
-	mux.HandleFunc("/api/v1/paper/journal", app.paperJournalHandler)
+	mux.HandleFunc("/api/v1/paper/journal", operatorAPI.protect(permissionRead, app.paperJournalHandler))
 	mux.HandleFunc("/api/v1/backtests", app.backtestHandler)
 	mux.HandleFunc("/api/v1/backtests/performance", app.performanceHandler)
 	mux.HandleFunc("/api/v1/backtests/walk-forward", app.walkForwardHandler)
 	mux.HandleFunc("/api/v1/paper-automation/evaluate", app.paperAutomationHandler)
-	mux.HandleFunc("/api/v1/paper-automation/runtime", runtime.statusHandler)
-	mux.HandleFunc("/api/v1/paper-automation/runtime/cycles", runtime.cyclesHandler)
-	mux.HandleFunc("/api/v1/paper-operations/status", operations.statusHandler)
-	mux.HandleFunc("/api/v1/paper-operations/findings", operations.findingsHandler)
-	mux.HandleFunc("/api/v1/paper-operations/ledger", operations.ledgerHandler)
-	mux.HandleFunc("/api/v1/paper-operations/rollup", operations.rollupHandler)
+	mux.HandleFunc("/api/v1/paper-automation/runtime", operatorAPI.protect(permissionRead, runtime.statusHandler))
+	mux.HandleFunc("/api/v1/paper-automation/runtime/cycles", operatorAPI.protect(permissionRead, runtime.cyclesHandler))
+	mux.HandleFunc("/api/v1/paper-operations/status", operatorAPI.handler(permissionRead, "STATUS", false))
+	mux.HandleFunc("/api/v1/paper-operations/findings", operatorAPI.handler(permissionRead, "FINDINGS", false))
+	mux.HandleFunc("/api/v1/paper-operations/ledger", operatorAPI.handler(permissionRead, "LEDGER", false))
+	mux.HandleFunc("/api/v1/paper-operations/rollup", operatorAPI.handler(permissionRead, "ROLLUP", false))
+	mux.HandleFunc("/api/v1/paper-operations/pause", operatorAPI.handler(permissionPause, "PAUSE", true))
+	mux.HandleFunc("/api/v1/paper-operations/resume", operatorAPI.handler(permissionResume, "RESUME", true))
+	mux.HandleFunc("/api/v1/paper-operations/kill-switch/activate", operatorAPI.handler(permissionKill, "KILL_SWITCH_ACTIVATE", true))
+	mux.HandleFunc("/api/v1/paper-operations/kill-switch/release-request", operatorAPI.handler(permissionRelease, "KILL_SWITCH_RELEASE_REQUEST", true))
+	mux.HandleFunc("/api/v1/paper-operations/reconciliation/run", operatorAPI.handler(permissionReconcile, "RECONCILE", true))
+	mux.HandleFunc("/api/v1/paper-operations/repairs/preview", operatorAPI.handler(permissionRepairView, "REPAIR_PREVIEW", true))
+	mux.HandleFunc("/api/v1/paper-operations/repairs/apply", operatorAPI.handler(permissionRepairApply, "REPAIR_APPLY", true))
 
 	server := &http.Server{
 		Addr:              "0.0.0.0:" + port,

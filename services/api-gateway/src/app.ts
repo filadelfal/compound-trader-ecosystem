@@ -3,6 +3,7 @@ import client from "prom-client";
 import { config } from "./config";
 import { checkDatabase } from "./db";
 import { checkCache } from "./cache";
+import { operatorProxy } from "./operator";
 
 client.collectDefaultMetrics({ prefix: `${config.SERVICE_NAME.replace(/-/g, "_")}_` });
 
@@ -34,6 +35,12 @@ app.get("/metrics", async (_req, res) => {
 
 app.get("/api/v1/ping", (_req, res) => {
   res.status(200).json({ message: "pong", service: config.SERVICE_NAME });
+});
+
+app.all("/api/v1/operator/*", operatorProxy);
+
+app.use((_error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  res.status(503).json({ error: "dependency_unavailable" });
 });
 
 app.use((_req, res) => {

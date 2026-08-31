@@ -550,6 +550,13 @@
                                                              "LOG_LEVEL":  "info",
                                                              "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                              "REDIS_URL":  "redis://redis:6379/0"
+                                                             ,"JWT_ACCESS_SECRET": "${JWT_ACCESS_SECRET}"
+                                                             ,"JWT_ISSUER": "compound-trader"
+                                                             ,"JWT_AUDIENCE": "compound-trader-platform"
+                                                             ,"OPERATOR_ASSERTION_SECRET": "${OPERATOR_ASSERTION_SECRET}"
+                                                             ,"OPERATOR_ASSERTION_ISSUER": "compound-api-gateway"
+                                                             ,"OPERATOR_ASSERTION_AUDIENCE": "compound-trading-engine"
+                                                             ,"TRADING_ENGINE_URL": "http://trading-engine:3003"
                                                          },
                                          "depends_on":  {
                                                             "redis":  {
@@ -574,6 +581,14 @@
                                                                 "LOG_LEVEL":  "info",
                                                                 "DATABASE_URL":  "postgresql://compound:${POSTGRES_PASSWORD:-compound_dev_password}@postgres:5432/compound",
                                                                 "REDIS_URL":  "redis://redis:6379/0"
+                                                                ,"OPERATOR_AUTH_ENABLED": "true"
+                                                                ,"OPERATOR_ASSERTION_ALGORITHM": "HS256"
+                                                                ,"OPERATOR_ASSERTION_SECRET": "${OPERATOR_ASSERTION_SECRET}"
+                                                                ,"OPERATOR_ASSERTION_ISSUER": "compound-api-gateway"
+                                                                ,"OPERATOR_ASSERTION_AUDIENCE": "compound-trading-engine"
+                                                                ,"OPERATOR_ASSERTION_MAX_LIFETIME_SECONDS": "60"
+                                                                ,"OPERATOR_ASSERTION_CLOCK_SKEW_SECONDS": "5"
+                                                                ,"OPERATOR_ASSERTION_REPLAY_TTL_SECONDS": "90"
                                                             },
                                             "depends_on":  {
                                                                "postgres":  {
@@ -685,7 +700,8 @@
                                                       "9090:9090"
                                                   ],
                                         "volumes":  [
-                                                        "./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+                                                        "./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro",
+                                                        "./observability/operator-security-alerts.yml:/etc/prometheus/operator-security-alerts.yml:ro"
                                                     ],
                                         "restart":  "unless-stopped",
                                         "networks":  [
